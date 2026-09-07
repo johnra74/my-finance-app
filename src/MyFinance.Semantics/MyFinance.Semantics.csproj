@@ -1,0 +1,28 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>MyFinance.Semantics</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.ML.OnnxRuntime" />
+    <PackageReference Include="Microsoft.ML.Tokenizers" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\MyFinance.Import\MyFinance.Import.csproj" />
+  </ItemGroup>
+
+  <!--
+    The weights are embedded rather than copied beside the executable: the application ships
+    as a single file, and a model sitting next to it is a file users move, zip without, or
+    lose. Fetched by tools/fetch-model.sh, or tools\fetch-model on Windows, which verifies
+    a pinned hash.
+  -->
+  <ItemGroup>
+    <EmbeddedResource Include="Assets\model_quantized.onnx" LogicalName="model.onnx" Condition="Exists('Assets\model_quantized.onnx')" />
+    <EmbeddedResource Include="Assets\vocab.txt" LogicalName="vocab.txt" Condition="Exists('Assets\vocab.txt')" />
+  </ItemGroup>
+
+</Project>

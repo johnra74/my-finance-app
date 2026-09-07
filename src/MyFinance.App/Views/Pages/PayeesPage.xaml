@@ -1,0 +1,78 @@
+<UserControl x:Class="MyFinance.App.Views.Pages.PayeesPage"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <Grid Grid.Row="0" Margin="0,0,0,12">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="240" />
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+
+            <TextBox Grid.Column="0" Text="{Binding NewName, UpdateSourceTrigger=PropertyChanged}"
+                     ToolTip="Name for a new payee, or the new name for the selected one" />
+
+            <Button Grid.Column="1" Margin="8,0,0,0" Style="{StaticResource PrimaryButton}"
+                    Content="Add" Command="{Binding AddCommand}" />
+
+            <Button Grid.Column="2" Margin="8,0,0,0" Style="{StaticResource SecondaryButton}"
+                    Content="Rename" Command="{Binding RenameCommand}"
+                    CommandParameter="{Binding Selected}" />
+
+            <Button Grid.Column="3" Margin="8,0,0,0" Style="{StaticResource SecondaryButton}"
+                    Content="Delete" Command="{Binding DeleteCommand}"
+                    CommandParameter="{Binding Selected}" />
+        </Grid>
+
+        <DataGrid Grid.Row="1"
+                  Style="{StaticResource DataGridBase}"
+                  ItemsSource="{Binding Items}"
+                  SelectedItem="{Binding Selected}">
+            <DataGrid.Columns>
+                <DataGridTextColumn Header="Payee" Width="*"
+                                    Binding="{Binding Name}"
+                                    ElementStyle="{StaticResource GridCellText}" />
+                <DataGridTextColumn Header="Usual category" Width="220"
+                                    Binding="{Binding LastCategoryName}"
+                                    ElementStyle="{StaticResource GridCellText}" />
+                <DataGridTextColumn Header="Transactions" Width="110"
+                                    Binding="{Binding UseCount}"
+                                    ElementStyle="{StaticResource GridAmountText}" />
+            </DataGrid.Columns>
+        </DataGrid>
+
+        <!-- Merge: the fix for the duplicates bank downloads create. -->
+        <Border Grid.Row="2" Style="{StaticResource CardBorder}" Margin="0,12,0,0">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="240" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+
+                <TextBlock Grid.Column="0" VerticalAlignment="Center"
+                           Style="{StaticResource SecondaryText}"
+                           Text="Merge the selected payee into" />
+
+                <ComboBox Grid.Column="3" Margin="8,0"
+                          ItemsSource="{Binding Items}"
+                          DisplayMemberPath="Name"
+                          SelectedItem="{Binding MergeTarget}" />
+
+                <Button Grid.Column="4" Style="{StaticResource SecondaryButton}"
+                        Content="Merge" Command="{Binding MergeCommand}" />
+            </Grid>
+        </Border>
+    </Grid>
+</UserControl>

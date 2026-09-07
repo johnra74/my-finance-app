@@ -1,0 +1,884 @@
+<title>MyFinance</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&family=Zilla+Slab:wght@500;600;700&display=swap">
+
+<style>
+  /* ------------------------------------------------------------------
+     Tokens. The complete light palette lives here, on bare :root, so the
+     un-stamped "system" state always resolves. The two blocks below only
+     redefine these values.
+     ------------------------------------------------------------------ */
+  :root {
+    /* Green-bar accounting stationery, not cream. */
+    --paper:        #EDF0E9;
+    --paper-rule:   #E3E9DE;
+    --paper-raised: #F7F9F4;
+
+    /* Iron-gall ink: a green-black, never #000. */
+    --ink:          #14201F;
+    --ink-soft:     #3D4B49;
+    --ink-faint:    #6B7A78;
+
+    --rule:         #C6D0C4;
+    --rule-hair:    #D8DFD4;
+
+    --accent:       #0F5A54;
+    --accent-soft:  #0F5A5414;
+    --accent-ink:   #F7F9F4;
+
+    /* Accounting convention, used as content: in is ink, out is oxide red. */
+    --debit:        #9B2C22;
+    --credit:       #14201F;
+
+    --caution:      #8A5A12;
+
+    --shadow: 0 1px 0 var(--rule-hair);
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --paper:        #0F1513;
+      --paper-rule:   #141B19;
+      --paper-raised: #182120;
+
+      --ink:          #E4EAE3;
+      --ink-soft:     #A8B5B1;
+      --ink-faint:    #7B8A86;
+
+      --rule:         #2A3532;
+      --rule-hair:    #202A28;
+
+      --accent:       #4FBFAE;
+      --accent-soft:  #4FBFAE1A;
+      --accent-ink:   #0F1513;
+
+      --debit:        #E0796B;
+      --credit:       #E4EAE3;
+
+      --caution:      #D2A24C;
+
+      --shadow: 0 1px 0 var(--rule-hair);
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --paper:        #0F1513;
+    --paper-rule:   #141B19;
+    --paper-raised: #182120;
+
+    --ink:          #E4EAE3;
+    --ink-soft:     #A8B5B1;
+    --ink-faint:    #7B8A86;
+
+    --rule:         #2A3532;
+    --rule-hair:    #202A28;
+
+    --accent:       #4FBFAE;
+    --accent-soft:  #4FBFAE1A;
+    --accent-ink:   #0F1513;
+
+    --debit:        #E0796B;
+    --credit:       #E4EAE3;
+
+    --caution:      #D2A24C;
+
+    --shadow: 0 1px 0 var(--rule-hair);
+  }
+
+  /* ------------------------------------------------------------------ */
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: "IBM Plex Sans", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+    font-size: 17px;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .wrap {
+    max-width: 1080px;
+    margin: 0 auto;
+    padding: 0 32px;
+  }
+
+  .measure { max-width: 64ch; }
+
+  h1, h2, h3 {
+    font-family: "Zilla Slab", Georgia, "Times New Roman", serif;
+    font-weight: 600;
+    text-wrap: balance;
+    margin: 0;
+    letter-spacing: -0.01em;
+  }
+
+  h1 { font-size: clamp(2.6rem, 6vw, 4.1rem); line-height: 1.02; font-weight: 700; }
+  h2 { font-size: clamp(1.7rem, 3.2vw, 2.3rem); line-height: 1.14; }
+  h3 { font-size: 1.14rem; line-height: 1.3; font-weight: 600; }
+
+  p { margin: 0; }
+  a { color: inherit; }
+
+  .eyebrow {
+    font-family: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+    font-size: 0.7rem;
+    font-weight: 500;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+  }
+
+  .mono {
+    font-family: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .lede { font-size: 1.24rem; line-height: 1.5; color: var(--ink-soft); }
+
+  /* Sections sit on ledger rules rather than inside cards. */
+  section {
+    border-top: 1px solid var(--rule);
+    padding: 76px 0;
+  }
+  section:first-of-type { border-top: 0; }
+
+  .head {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    margin-bottom: 40px;
+  }
+
+  /* ---------------- masthead ---------------- */
+
+  .masthead {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 24px;
+    padding: 22px 0 20px;
+    border-bottom: 2px solid var(--ink);
+    flex-wrap: wrap;
+  }
+
+  .wordmark {
+    font-family: "Zilla Slab", Georgia, serif;
+    font-weight: 700;
+    font-size: 1.32rem;
+    letter-spacing: -0.02em;
+  }
+  .wordmark span { color: var(--accent); }
+
+  .masthead .meta {
+    display: flex;
+    gap: 22px;
+    align-items: baseline;
+    flex-wrap: wrap;
+  }
+
+  /* ---------------- hero ---------------- */
+
+  .hero { padding-top: 60px; padding-bottom: 56px; }
+
+  .hero-grid {
+    display: grid;
+    gap: 34px;
+  }
+
+  .hero h1 { margin-bottom: 4px; }
+
+  .hero .lede { max-width: 58ch; }
+
+  .kicker {
+    color: var(--accent);
+    font-weight: 600;
+  }
+
+  .cta-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 14px 26px;
+    align-items: center;
+    margin-top: 8px;
+  }
+
+  .cmd {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 0.9rem;
+    background: var(--ink);
+    color: var(--paper-raised);
+    padding: 12px 18px;
+    border-radius: 2px;
+    white-space: nowrap;
+  }
+  .cmd b { color: var(--accent); font-weight: 500; }
+
+  .cta-note { font-size: 0.9rem; color: var(--ink-faint); }
+
+  /* ---------------- the register strip ---------------- */
+
+  .register-frame {
+    border: 1px solid var(--rule);
+    background: var(--paper-raised);
+    overflow-x: auto;
+  }
+
+  .register-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 18px;
+    padding: 11px 16px;
+    border-bottom: 1px solid var(--rule);
+    background: var(--accent);
+    color: var(--accent-ink);
+    flex-wrap: wrap;
+  }
+  .register-bar .eyebrow { color: var(--accent-ink); opacity: 0.86; }
+  .register-bar strong {
+    font-family: "Zilla Slab", Georgia, serif;
+    font-weight: 600;
+    font-size: 1rem;
+  }
+
+  table.register {
+    border-collapse: collapse;
+    width: 100%;
+    min-width: 660px;
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-variant-numeric: tabular-nums;
+    font-size: 0.85rem;
+  }
+
+  table.register th {
+    text-align: left;
+    font-weight: 500;
+    font-size: 0.68rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    padding: 9px 14px;
+    border-bottom: 1px solid var(--rule);
+    white-space: nowrap;
+  }
+
+  table.register td {
+    padding: 9px 14px;
+    border-bottom: 1px solid var(--rule-hair);
+    white-space: nowrap;
+  }
+
+  /* Green-bar striping: the reason continuous stationery looked like this. */
+  table.register tbody tr:nth-child(even) { background: var(--paper-rule); }
+  table.register tbody tr:last-child td { border-bottom: 0; }
+
+  .num { text-align: right; }
+  .out { color: var(--debit); }
+  .in  { color: var(--credit); }
+  .bal { font-weight: 600; }
+
+  .tick { color: var(--accent); }
+
+  .register-foot {
+    display: flex;
+    justify-content: space-between;
+    gap: 18px;
+    padding: 11px 16px;
+    border-top: 1px solid var(--rule);
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 0.76rem;
+    font-variant-numeric: tabular-nums;
+    color: var(--ink-faint);
+    flex-wrap: wrap;
+  }
+
+  .caption {
+    font-size: 0.78rem;
+    color: var(--ink-faint);
+    margin-top: 10px;
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+  }
+
+  /* ---------------- capability list ---------------- */
+
+  .rows { display: grid; gap: 0; }
+
+  .row {
+    display: grid;
+    grid-template-columns: 190px 1fr;
+    gap: 8px 36px;
+    padding: 24px 0;
+    border-top: 1px solid var(--rule-hair);
+    align-items: start;
+  }
+  .row:first-child { border-top: 0; padding-top: 0; }
+
+  .row h3 { padding-top: 1px; }
+  .row p { color: var(--ink-soft); }
+  .row .detail { display: grid; gap: 10px; }
+
+  .tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 8px;
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 0.72rem;
+    color: var(--ink-faint);
+  }
+  .tags span {
+    border: 1px solid var(--rule);
+    padding: 2px 8px;
+    border-radius: 2px;
+    white-space: nowrap;
+  }
+
+  /* ---------------- the two-sided ledger ---------------- */
+
+  .ledger {
+    border: 1px solid var(--rule);
+    overflow-x: auto;
+    background: var(--paper-raised);
+  }
+
+  table.tledger {
+    border-collapse: collapse;
+    width: 100%;
+    min-width: 640px;
+  }
+
+  table.tledger th {
+    text-align: left;
+    padding: 13px 20px;
+    border-bottom: 1px solid var(--ink);
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 0.7rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    font-weight: 500;
+  }
+  table.tledger th:first-child { color: var(--credit); }
+  table.tledger th:last-child  { color: var(--debit); width: 46%; }
+
+  table.tledger td {
+    padding: 17px 20px;
+    border-bottom: 1px solid var(--rule-hair);
+    vertical-align: top;
+    font-size: 0.95rem;
+    line-height: 1.52;
+  }
+  table.tledger td + td {
+    border-left: 1px solid var(--rule);
+    color: var(--ink-soft);
+  }
+  table.tledger tbody tr:last-child td { border-bottom: 0; }
+
+  table.tledger strong { font-weight: 600; }
+
+  /* ---------------- measured results ---------------- */
+
+  .bench {
+    border-collapse: collapse;
+    width: 100%;
+    min-width: 520px;
+    font-size: 0.92rem;
+  }
+  .bench caption {
+    text-align: left;
+    padding-bottom: 12px;
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 0.72rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+  }
+  .bench th {
+    text-align: left;
+    font-weight: 500;
+    font-size: 0.7rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    padding: 0 14px 9px 0;
+    border-bottom: 1px solid var(--rule);
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+  }
+  .bench th.num, .bench td.num { text-align: right; padding-right: 0; }
+  .bench td {
+    padding: 11px 14px 11px 0;
+    border-bottom: 1px solid var(--rule-hair);
+  }
+  .bench td.num {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-variant-numeric: tabular-nums;
+  }
+  .bench tr.gap td { color: var(--ink-faint); font-style: italic; }
+  .bench tr:last-child td { border-bottom: 0; }
+  .bench .strong { font-weight: 600; color: var(--accent); }
+
+  .scroller { overflow-x: auto; }
+
+  /* ---------------- notes / callouts ---------------- */
+
+  .note {
+    border-left: 3px solid var(--accent);
+    background: var(--accent-soft);
+    padding: 18px 22px;
+    display: grid;
+    gap: 8px;
+  }
+  .note.warn { border-left-color: var(--debit); background: transparent; }
+
+  .note h3 { font-family: "IBM Plex Sans", sans-serif; font-size: 0.95rem; }
+
+  .split {
+    display: grid;
+    gap: 40px;
+  }
+
+  .specs { display: grid; gap: 0; }
+  .spec {
+    display: flex;
+    justify-content: space-between;
+    gap: 24px;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--rule-hair);
+    font-size: 0.94rem;
+  }
+  .spec:last-child { border-bottom: 0; }
+  .spec dt { color: var(--ink-faint); }
+  .spec dd {
+    margin: 0;
+    text-align: right;
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-variant-numeric: tabular-nums;
+    font-size: 0.87rem;
+  }
+
+  footer {
+    border-top: 2px solid var(--ink);
+    padding: 34px 0 60px;
+    display: flex;
+    justify-content: space-between;
+    gap: 20px;
+    flex-wrap: wrap;
+    color: var(--ink-faint);
+    font-size: 0.85rem;
+  }
+
+  a.link {
+    color: var(--accent);
+    text-underline-offset: 3px;
+    text-decoration-thickness: 1px;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 3px;
+  }
+
+  @media (min-width: 900px) {
+    .hero-grid { grid-template-columns: minmax(0, 1fr); }
+    .split { grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); gap: 56px; }
+  }
+
+  @media (max-width: 700px) {
+    body { font-size: 16px; }
+    .wrap { padding: 0 20px; }
+    section { padding: 54px 0; }
+    .row { grid-template-columns: 1fr; gap: 10px; }
+    .spec { flex-direction: column; gap: 2px; }
+    .spec dd { text-align: left; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { animation: none !important; transition: none !important; }
+  }
+</style>
+
+<div class="wrap">
+
+  <header class="masthead">
+    <div class="wordmark">My<span>Finance</span></div>
+    <div class="meta">
+      <span class="eyebrow">Version 1.0.0</span>
+      <span class="eyebrow">Windows 10 &amp; 11</span>
+      <span class="eyebrow">One file &middot; 85&nbsp;MB</span>
+    </div>
+  </header>
+
+  <section class="hero">
+    <div class="hero-grid">
+      <div class="measure" style="display:grid; gap:22px;">
+        <p class="eyebrow">A replacement for Microsoft Money Plus Sunset</p>
+        <h1>Twenty-five years of records, in a file that is still yours.</h1>
+        <p class="lede">
+          MyFinance opens a Money <span class="mono">.mny</span> file without needing Money installed,
+          and writes what it finds into an encrypted book on your own machine.
+          <span class="kicker">There is no network code in it at all,</span> so nothing you enter has
+          anywhere to go.
+        </p>
+        <div class="cta-row">
+          <code class="cmd">$ <b>./build.sh publish</b></code>
+          <span class="cta-note">Produces a single <span class="mono">.exe</span>. No installer, no account, nothing written to the registry.</span>
+        </div>
+      </div>
+
+      <div>
+        <div class="register-frame">
+          <div class="register-bar">
+            <strong>Checking</strong>
+            <span class="eyebrow">Bank balance 4,182.06 &nbsp;&middot;&nbsp; Current 3,947.31</span>
+          </div>
+          <table class="register">
+            <thead>
+              <tr>
+                <th scope="col">Date</th>
+                <th scope="col">Num</th>
+                <th scope="col">Payee</th>
+                <th scope="col">Category</th>
+                <th scope="col">C</th>
+                <th scope="col" class="num">Payment</th>
+                <th scope="col" class="num">Deposit</th>
+                <th scope="col" class="num">Balance</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>02/03/2026</td><td>1168</td><td>Ridgeway Roofing</td>
+                <td>Home : Repairs</td><td class="tick">R</td>
+                <td class="num out">840.00</td><td class="num"></td><td class="num bal">4,522.06</td>
+              </tr>
+              <tr>
+                <td>02/05/2026</td><td>ATM</td><td>Cash withdrawal</td>
+                <td>Cash</td><td class="tick">R</td>
+                <td class="num out">120.00</td><td class="num"></td><td class="num bal">4,402.06</td>
+              </tr>
+              <tr>
+                <td>02/09/2026</td><td></td><td>Brightwater Utilities</td>
+                <td>Bills : Water</td><td class="tick">C</td>
+                <td class="num out">64.18</td><td class="num"></td><td class="num bal">4,337.88</td>
+              </tr>
+              <tr>
+                <td>02/12/2026</td><td></td><td>Halverson &amp; Co</td>
+                <td>Income : Salary</td><td class="tick">C</td>
+                <td class="num"></td><td class="num in">2,410.00</td><td class="num bal">6,747.88</td>
+              </tr>
+              <tr>
+                <td>02/14/2026</td><td></td><td>Transfer to Savings</td>
+                <td>[Savings]</td><td></td>
+                <td class="num out">600.00</td><td class="num"></td><td class="num bal">6,147.88</td>
+              </tr>
+              <tr>
+                <td>02/16/2026</td><td>1169</td><td>Marlow Dental</td>
+                <td>Health : Dental</td><td></td>
+                <td class="num out">215.50</td><td class="num"></td><td class="num bal">5,932.38</td>
+              </tr>
+            </tbody>
+          </table>
+          <div class="register-foot">
+            <span>6 shown &middot; filter: this month</span>
+            <span>C = cleared &nbsp; R = reconciled</span>
+          </div>
+        </div>
+        <p class="caption">Example data. Every amount is held as a whole number of cents; there is no floating-point arithmetic anywhere in the application.</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="head">
+      <p class="eyebrow">Why this exists</p>
+      <h2 class="measure">Money's file format is the reason this application exists.</h2>
+    </div>
+    <div class="split">
+      <div class="measure" style="display:grid; gap:18px;">
+        <p>
+          Money Plus Sunset still runs on Windows 11. That will not hold forever. Its books are
+          Jet&nbsp;4 databases in the MSISAM variant Money used, and most advice for getting data out
+          of one starts by telling you to install a program Microsoft stopped shipping in 2011.
+        </p>
+        <p>
+          MyFinance reads that format directly. It brings across accounts, categories, payees and
+          every transaction, keeping splits, transfers and reconciliation state intact, along with the
+          recurring bills and any holdings. It also brings the category you filed each shop under,
+          which for most people is decades of small decisions. A migrated book therefore arrives
+          already knowing how you categorize things, and the first statement you import is mostly
+          filled in.
+        </p>
+        <p>
+          The last step lists every account and its closing balance in the same order Money's account
+          list shows them. Money is probably still installed, so you can put the two windows side by
+          side and check the figures agree before you rely on the new book.
+        </p>
+      </div>
+      <div style="display:grid; gap:20px; align-content:start;">
+        <div class="note">
+          <h3>Your file is only ever read</h3>
+          <p style="color:var(--ink-soft); font-size:0.94rem;">
+            The <span class="mono">.mny</span> is opened read-only and is never written to or moved.
+            If a migration fails half way, your original file is exactly as it was.
+          </p>
+        </div>
+        <dl class="specs">
+          <div class="spec"><dt>Reference file</dt><dd>23 MB &middot; 25 years</dd></div>
+          <div class="spec"><dt>Transactions carried</dt><dd>~19,000</dd></div>
+          <div class="spec"><dt>Recurring bills</dt><dd>46 of 46</dd></div>
+          <div class="spec"><dt>Money required</dt><dd>none</dd></div>
+        </dl>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="head">
+      <p class="eyebrow">What it does</p>
+      <h2 class="measure">The screens Money had, and the arithmetic behind them.</h2>
+    </div>
+
+    <div class="rows">
+      <div class="row">
+        <h3>Accounts &amp; register</h3>
+        <div class="detail">
+          <p>
+            Accounts grouped with subtotals, and a register whose running balance is worked out over
+            the account's whole history, so filtering the view never changes the figures in that column.
+            Transfers are written as two linked rows, one in each account. Reconciling will not let you
+            finish while the difference is anything other than zero. You enter an amount as a plain
+            figure and pick Payment or Deposit, instead of putting a minus sign in the right place.
+          </p>
+          <div class="tags"><span>running balance</span><span>splits</span><span>transfers</span><span>reconcile</span><span>void</span></div>
+        </div>
+      </div>
+
+      <div class="row">
+        <h3>Statement import</h3>
+        <div class="detail">
+          <p>
+            OFX 1.x and 2.x, QIF, <span class="mono">.qfx</span> and <span class="mono">.qbo</span>.
+            Banks label these inconsistently, so the format is worked out from what is inside the file
+            rather than from its extension. Duplicates are settled using the bank's own reference, so
+            importing a statement that overlaps one you already have adds only the new rows. Each import
+            is recorded as a batch and can be undone in one action.
+          </p>
+          <div class="tags"><span>OFX 1.x SGML</span><span>OFX 2.x XML</span><span>QIF</span><span>dedupe</span><span>undo</span></div>
+        </div>
+      </div>
+
+      <div class="row">
+        <h3>The sign check</h3>
+        <div class="detail">
+          <p>
+            Card issuers disagree about which way round the amounts run. Import a statement backwards
+            and you get a book in which every individual figure looks reasonable and every total is wrong,
+            with nothing on screen to tell you. The preview shows the balance your import would produce
+            beside the balance the bank states, and offers a switch to reverse the file.
+          </p>
+        </div>
+      </div>
+
+      <div class="row">
+        <h3>Bills &amp; forecast</h3>
+        <div class="detail">
+          <p>
+            Due dates come from the series start date and the occurrence number, not from stepping
+            forward off the last one. Stepping looks equivalent until a bill due on the 31st meets
+            February, gets clamped to the 28th and stays there. A bill several months behind is entered
+            on the days it was actually owed, so the running balance still reads correctly afterwards.
+            The forecast marks the day the balance would first go below zero, which is usually more
+            useful than the figure at the end of the month.
+          </p>
+          <div class="tags"><span>auto-entry</span><span>backlogs</span><span>five-month calendar</span><span>low point</span></div>
+        </div>
+      </div>
+
+      <div class="row">
+        <h3>Budgets &amp; reports</h3>
+        <div class="detail">
+          <p>
+            Set a figure per category per month and see what actually happened against it. Unspent
+            money can roll into the next month; an overspend never does, so one bad month does not
+            compound into the next. There are eight reports, each with a chart and a table. Double-click
+            any row to see the transactions behind it, and again to land on one in its register. If
+            enough spending is uncategorized to make the percentages misleading, the report tells you how
+            much rather than leaving you to draw a conclusion from it.
+          </p>
+          <div class="tags"><span>rollover of surplus only</span><span>8 reports</span><span>drill-down</span><span>CSV</span><span>print</span></div>
+        </div>
+      </div>
+
+      <div class="row">
+        <h3>Backups</h3>
+        <div class="detail">
+          <p>
+            A book is two files and both are needed to open it, so backups archive the pair together
+            rather than relying on you to remember the second one. The write-ahead log is folded in first,
+            or the copy would be missing the session you are trying to protect. Each archive is then read
+            back before it is accepted, which catches a full disk or a failing drive while there is still
+            something you can do about it.
+          </p>
+          <div class="tags"><span>on close</span><span>verified</span><span>pruned</span><span>restore before opening</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="head">
+      <p class="eyebrow">Measured, not claimed</p>
+      <h2 class="measure">It fills the category in. Here is how often it is right.</h2>
+    </div>
+    <div class="split">
+      <div style="display:grid; gap:18px;">
+        <div class="scroller">
+          <table class="bench">
+            <caption>17,559 categorized transactions &middot; trained to Nov 2019 &middot; tested on the six years after</caption>
+            <thead>
+              <tr>
+                <th scope="col">Source</th>
+                <th scope="col" class="num">Answers</th>
+                <th scope="col" class="num">Correct</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td>What this payee was last filed under</td><td class="num">62.6%</td><td class="num">92.7%</td></tr>
+              <tr><td>A classifier trained on your own book</td><td class="num">13.1%</td><td class="num">78.3%</td></tr>
+              <tr class="gap"><td>Neither &mdash; nothing to go on</td><td class="num">24.3%</td><td class="num">&mdash;</td></tr>
+              <tr><td>Merchant resemblance, on that 24.3%</td><td class="num">16.4%</td><td class="num strong">62.9%</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="caption">
+          On a hundred-row statement, the last of those correctly fills in about four rows that would
+          otherwise arrive blank, and gets about one and a half wrong.
+        </p>
+      </div>
+
+      <div class="measure" style="display:grid; gap:18px;">
+        <p>
+          Six sources in descending order of authority: a rule you wrote, the category in the file, this
+          payee's history, a classifier trained on your own book, the merchant this one most resembles,
+          and the industry code where your bank sends one.
+        </p>
+        <p>
+          The fifth is a small language model bundled into the executable, which runs on your machine
+          and adds about 22 MB to the download. It can put <span class="mono">CONTOSO SUPERMARKET #543</span>
+          next to <span class="mono">NORTHWIND GROCERY STORE</span> even though they share no words. It is the
+          least reliable of the six and the only one that works when you have no history at all, so it
+          is set to speak rarely, and when it does it tells you which merchant it matched.
+        </p>
+        <div class="note">
+          <h3>A guess is never applied unseen</h3>
+          <p style="color:var(--ink-soft); font-size:0.94rem;">
+            Suggestions are marked as suggestions and are never written in without you seeing them.
+            A wrong category you spot takes a moment to fix. One you never see becomes part of the
+            history you go on to rely on.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="head">
+      <p class="eyebrow">Both sides of the account</p>
+      <h2 class="measure">What it does well, and what it will not do.</h2>
+      <p class="lede measure">
+        Most of what follows on the right is a deliberate trade-off rather than something not built yet.
+        It seems fair to put both columns in front of you before you move a book into this.
+      </p>
+    </div>
+
+    <div class="ledger">
+      <table class="tledger">
+        <thead>
+          <tr><th scope="col">What you get</th><th scope="col">What it costs you</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Full encryption.</strong> Argon2id derives a 256-bit key from your password; SQLCipher encrypts the database. The password is stored nowhere, in any form.</td>
+            <td><strong>There is no password recovery.</strong> If you forget it, the data is gone, and neither this application nor its author can do anything about that. Unlocking takes about half a second on purpose, because that is what makes guessing it expensive.</td>
+          </tr>
+          <tr>
+            <td><strong>Nothing leaves the machine.</strong> No telemetry, no crash reporting, no update check, no account, no network calls of any kind.</td>
+            <td><strong>No sync, no phone app, no price feed.</strong> You type security prices in yourself, and every valuation shows the date of the price it used, so you can see when a figure has gone stale.</td>
+          </tr>
+          <tr>
+            <td><strong>File import only.</strong> Because there is no bank connection, there are no banking credentials to collect, store, or lose.</td>
+            <td><strong>You download each statement yourself.</strong> There is no Direct Connect, and a bank that offers neither OFX nor QIF cannot be imported at all.</td>
+          </tr>
+          <tr>
+            <td><strong>One self-contained file.</strong> No installer, no runtime to install, no registry entries. Copy it to a memory stick and run it from there.</td>
+            <td><strong>85 MB, and no updater.</strong> Nothing tells you a new version exists; every upgrade is a file you copy over the old one.</td>
+          </tr>
+          <tr>
+            <td><strong>The whole book exports</strong> to a single JSON file with a documented shape: every account, transaction, split, transfer, bill, budget and rule, readable without MyFinance.</td>
+            <td><strong>That file is not encrypted.</strong> You are told so before you choose where to save it. Encrypting it would put you back in the situation it exists to get you out of.</td>
+          </tr>
+          <tr>
+            <td><strong>Your book is yours alone.</strong> Single user, on one machine, in a file you can back up wherever you like.</td>
+            <td><strong>Losing either half loses the book.</strong> The <span class="mono">.mfmeta</span> sidecar holds no secret, but the key cannot be worked out again without it, so a copy of the database on its own is not a backup.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section>
+    <div class="head">
+      <p class="eyebrow">Getting it</p>
+      <h2 class="measure">Build it, copy it, open it.</h2>
+    </div>
+    <div class="split">
+      <div class="measure" style="display:grid; gap:18px;">
+        <p>
+          There is no installer and nothing to install. The publish step produces one self-contained
+          executable, and it cross-builds from Linux, so cutting a release needs no Windows machine.
+          Only running the interface does.
+        </p>
+        <div class="cta-row" style="margin-top:0;">
+          <code class="cmd">&gt; <b>build publish</b></code>
+          <span class="cta-note">Windows</span>
+        </div>
+        <div class="cta-row" style="margin-top:0;">
+          <code class="cmd">$ <b>./build.sh publish</b></code>
+          <span class="cta-note">Linux or macOS, cross-built for Windows</span>
+        </div>
+        <p style="font-size:0.94rem; color:var(--ink-soft);">
+          Press <span class="mono">F1</span> anywhere and the documentation opens at the page for the
+          screen you are on. The pages are carried inside the executable, so they work with no connection
+          and always describe the build you are running.
+        </p>
+      </div>
+
+      <div style="display:grid; gap:20px; align-content:start;">
+        <dl class="specs">
+          <div class="spec"><dt>Operating system</dt><dd>Windows 10 or 11</dd></div>
+          <div class="spec"><dt>Architecture</dt><dd>x64 or ARM64</dd></div>
+          <div class="spec"><dt>Runtime needed</dt><dd>none</dd></div>
+          <div class="spec"><dt>Privileges needed</dt><dd>none</dd></div>
+          <div class="spec"><dt>Network access</dt><dd>none, ever</dd></div>
+          <div class="spec"><dt>Built with</dt><dd>C# / .NET 10 &middot; WPF</dd></div>
+          <div class="spec"><dt>Test suite</dt><dd>1,170 passing</dd></div>
+        </dl>
+        <div class="note warn">
+          <h3>Read the backup page before you have anything to lose</h3>
+          <p style="color:var(--ink-soft); font-size:0.94rem;">
+            There is no password recovery and no copy of your book on anybody's server. If you lose it,
+            it is gone. The application backs itself up and checks each archive by reading it back, but
+            keeping a copy somewhere that is not this machine is still up to you.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <span>MyFinance 1.0.0 &mdash; personal finance for Windows.</span>
+    <span class="mono">Every amount an integer count of cents.</span>
+  </footer>
+
+</div>

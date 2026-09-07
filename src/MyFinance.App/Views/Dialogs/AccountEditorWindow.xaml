@@ -1,0 +1,92 @@
+<Window x:Class="MyFinance.App.Views.Dialogs.AccountEditorWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:conv="clr-namespace:MyFinance.App.Converters"
+        Title="{Binding Title}"
+        Width="520" SizeToContent="Height"
+        ResizeMode="NoResize"
+        ShowInTaskbar="False"
+        Background="{StaticResource SurfaceBrush}"
+        FontFamily="{StaticResource UiFontFamily}"
+        FontSize="{StaticResource FontSizeBody}">
+
+    <Window.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVisibility" />
+        <conv:InverseBooleanToVisibilityConverter x:Key="NotBoolToVisibility" />
+    </Window.Resources>
+
+    <StackPanel Margin="24">
+        <TextBlock Text="Name" Style="{StaticResource FieldLabel}" />
+        <TextBox Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}" />
+
+        <Grid Margin="0,14,0,0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="16" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+
+            <StackPanel Grid.Column="0">
+                <TextBlock Text="Type" Style="{StaticResource FieldLabel}" />
+                <ComboBox ItemsSource="{Binding Types}"
+                          DisplayMemberPath="Text"
+                          SelectedItem="{Binding SelectedType}"
+                          IsEnabled="{Binding CanChangeType}" />
+                <TextBlock Style="{StaticResource SecondaryText}"
+                           FontSize="{StaticResource FontSizeSmall}"
+                           Margin="0,4,0,0"
+                           TextWrapping="Wrap"
+                           Text="Fixed once the account has transactions — changing it would reverse the sign on everything already recorded."
+                           Visibility="{Binding CanChangeType, Converter={StaticResource NotBoolToVisibility}}" />
+            </StackPanel>
+
+            <StackPanel Grid.Column="2">
+                <TextBlock Text="Institution" Style="{StaticResource FieldLabel}" />
+                <TextBox Text="{Binding Institution, UpdateSourceTrigger=PropertyChanged}" />
+            </StackPanel>
+        </Grid>
+
+        <Grid Margin="0,14,0,0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="16" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+
+            <StackPanel Grid.Column="0">
+                <TextBlock Text="Account number (last digits only)" Style="{StaticResource FieldLabel}" />
+                <TextBox Text="{Binding AccountNumberMasked, UpdateSourceTrigger=PropertyChanged}" />
+            </StackPanel>
+
+            <StackPanel Grid.Column="2">
+                <TextBlock Text="Opening balance" Style="{StaticResource FieldLabel}" />
+                <TextBox Style="{StaticResource AmountBox}"
+                         Text="{Binding OpeningBalanceText, UpdateSourceTrigger=PropertyChanged}" />
+            </StackPanel>
+        </Grid>
+
+        <TextBlock Text="Opened on" Style="{StaticResource FieldLabel}" Margin="0,14,0,4" />
+        <DatePicker SelectedDate="{Binding OpenedOn}" HorizontalAlignment="Left" Width="220" />
+
+        <TextBlock Text="Notes" Style="{StaticResource FieldLabel}" Margin="0,14,0,4" />
+        <TextBox Text="{Binding Notes, UpdateSourceTrigger=PropertyChanged}"
+                 AcceptsReturn="True" TextWrapping="Wrap" Height="64"
+                 VerticalScrollBarVisibility="Auto" />
+
+        <StackPanel Orientation="Horizontal" Margin="0,14,0,0">
+            <CheckBox Content="Show on the home page" IsChecked="{Binding IsFavorite}" />
+            <CheckBox Content="Closed" IsChecked="{Binding IsClosed}" Margin="20,0,0,0" />
+        </StackPanel>
+
+        <TextBlock Style="{StaticResource ErrorText}" Margin="0,14,0,0"
+                   Text="{Binding ErrorMessage}"
+                   Visibility="{Binding HasError, Converter={StaticResource BoolToVisibility}}" />
+
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,20,0,0">
+            <Button Style="{StaticResource SecondaryButton}" Content="Cancel"
+                    IsCancel="True" Command="{Binding CancelCommand}" />
+            <Button Style="{StaticResource PrimaryButton}" Content="Save" Margin="8,0,0,0"
+                    IsDefault="True" Command="{Binding SaveCommand}" />
+        </StackPanel>
+    </StackPanel>
+</Window>

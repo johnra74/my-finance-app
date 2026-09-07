@@ -1,0 +1,181 @@
+<Window x:Class="MyFinance.App.Views.ShellWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:controls="clr-namespace:MyFinance.App.Views.Controls"
+        Icon="/Assets/MyFinance.ico"
+        Title="{Binding BookName}"
+        Width="1280" Height="840"
+        MinWidth="960" MinHeight="600"
+        WindowStartupLocation="CenterScreen"
+        Background="{StaticResource SurfaceBrush}"
+        FontFamily="{StaticResource UiFontFamily}"
+        FontSize="{StaticResource FontSizeBody}">
+
+    <Window.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVisibility" />
+    </Window.Resources>
+
+    <Window.InputBindings>
+        <!-- F1 opens the page for whichever screen is showing. -->
+        <KeyBinding Key="F1" Command="{Binding HelpCommand}" />
+    </Window.InputBindings>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <!-- Top-level section tabs -->
+        <Border Grid.Row="0" Background="{StaticResource NavBarBrush}">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+
+                <Button Grid.Column="0"
+                        Style="{StaticResource SectionTabButton}"
+                        Content="&#x2190;"
+                        ToolTip="Back"
+                        Command="{Binding GoBackCommand}"
+                        IsEnabled="{Binding CanGoBack}"
+                        Padding="16,10" />
+
+                <ItemsControl Grid.Column="1" ItemsSource="{Binding Sections}">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <StackPanel Orientation="Horizontal" />
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Button Content="{Binding Text}"
+                                    Command="{Binding DataContext.SelectSectionCommand,
+                                              RelativeSource={RelativeSource AncestorType=Window}}"
+                                    CommandParameter="{Binding}">
+                                <Button.Style>
+                                    <Style TargetType="Button" BasedOn="{StaticResource SectionTabButton}">
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsSelected}" Value="True">
+                                                <Setter Property="BorderBrush"
+                                                        Value="{StaticResource AccentBrush}" />
+                                                <Setter Property="FontWeight" Value="SemiBold" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Button.Style>
+                            </Button>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+
+                <StackPanel Grid.Column="2" Orientation="Horizontal">
+                    <Button Style="{StaticResource SectionTabButton}"
+                            Content="Help"
+                            ToolTip="Explain this screen (F1)"
+                            Command="{Binding HelpCommand}" />
+                    <Button Style="{StaticResource SectionTabButton}"
+                            Content="Diagnostics"
+                            ToolTip="Find the log, and record extra detail while chasing a problem"
+                            Command="{Binding DiagnosticsCommand}" />
+                    <Button Style="{StaticResource SectionTabButton}"
+                            Content="Export"
+                            ToolTip="Write your whole book to one file that can be read without MyFinance"
+                            Command="{Binding ExportBookCommand}" />
+                    <Button Style="{StaticResource SectionTabButton}"
+                            Content="Backups"
+                            ToolTip="Back this book up, and choose how often that happens"
+                            Command="{Binding BackupsCommand}" />
+                    <Button Style="{StaticResource SectionTabButton}"
+                            Content="About"
+                            ToolTip="Version, licence and what this build is made of"
+                            Command="{Binding AboutCommand}" />
+                    <Button Style="{StaticResource SectionTabButton}"
+                            Content="Lock"
+                            ToolTip="Lock this book and return to the unlock screen"
+                            Command="{Binding LockBookCommand}" />
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+
+            <!-- Left task pane -->
+            <Border Grid.Column="0"
+                    Width="216"
+                    Background="{StaticResource SurfaceAltBrush}"
+                    BorderBrush="{StaticResource BorderBrush}"
+                    BorderThickness="0,0,1,0"
+                    Visibility="{Binding HasTaskPane, Converter={StaticResource BoolToVisibility}}">
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <StackPanel Margin="18,18,18,18">
+                        <TextBlock Text="{Binding BackgroundStatus}"
+                                   Style="{StaticResource SecondaryText}"
+                                   TextWrapping="Wrap"
+                                   Margin="0,0,0,14"
+                                   Visibility="{Binding IsWorkingInBackground, Converter={StaticResource BoolToVisibility}}" />
+
+                        <TextBlock Text="{Binding TodayText}"
+                                   Style="{StaticResource SecondaryText}"
+                                   FontSize="{StaticResource FontSizeSmall}"
+                                   Margin="0,0,0,8" />
+
+                        <ItemsControl ItemsSource="{Binding TaskGroups}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <StackPanel>
+                                        <TextBlock Text="{Binding Header}"
+                                                   Style="{StaticResource TaskGroupHeaderText}" />
+                                        <Separator Margin="0,0,0,4"
+                                                   Background="{StaticResource BorderBrush}" />
+                                        <ItemsControl ItemsSource="{Binding Links}">
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate>
+                                                    <Button Style="{StaticResource LinkButton}"
+                                                            Content="{Binding Text}"
+                                                            IsEnabled="{Binding IsEnabled}"
+                                                            Command="{Binding DataContext.RunTaskCommand,
+                                                                      RelativeSource={RelativeSource AncestorType=Window}}"
+                                                            CommandParameter="{Binding}" />
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
+                                    </StackPanel>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </StackPanel>
+                </ScrollViewer>
+            </Border>
+
+            <!-- Content region -->
+            <Grid Grid.Column="1">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                </Grid.RowDefinitions>
+
+                <TextBlock Grid.Row="0"
+                           Text="{Binding CurrentPage.Title}"
+                           Style="{StaticResource PageTitleText}"
+                           Margin="28,22,28,14" />
+
+                <Grid Grid.Row="1">
+                    <ContentControl Content="{Binding CurrentPage}"
+                                    Margin="28,0,28,20" />
+
+                    <!-- Bound to the page's own busy state, which nothing showed before, so a
+                         report over twenty thousand transactions no longer looks like a
+                         frozen screen. -->
+                    <controls:BusyOverlay DataContext="{Binding CurrentPage}" />
+                </Grid>
+            </Grid>
+        </Grid>
+    </Grid>
+</Window>

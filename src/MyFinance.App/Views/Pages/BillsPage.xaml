@@ -1,0 +1,305 @@
+<UserControl x:Class="MyFinance.App.Views.Pages.BillsPage"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:conv="clr-namespace:MyFinance.App.Converters">
+
+    <UserControl.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVisibility" />
+        <conv:InverseBooleanToVisibilityConverter x:Key="NotBoolToVisibility" />
+        <conv:MoneySignBrushConverter x:Key="MoneyBrush" />
+
+        <!-- One day cell of the calendar strip. Days something falls due are bold and
+             accented; today gets a box, as the reference calendar does. -->
+        <DataTemplate x:Key="CalendarDayTemplate">
+            <Border Width="22" Height="18" Margin="0" CornerRadius="3">
+                <Border.Style>
+                    <Style TargetType="Border">
+                        <Setter Property="Background" Value="Transparent" />
+                        <Setter Property="BorderThickness" Value="0" />
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding IsToday}" Value="True">
+                                <Setter Property="BorderBrush" Value="{StaticResource AccentBrush}" />
+                                <Setter Property="BorderThickness" Value="1" />
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding HasBill}" Value="True">
+                                <Setter Property="Background" Value="{StaticResource AccentSoftBrush}" />
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </Border.Style>
+
+                <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center"
+                           FontSize="{StaticResource FontSizeSmall}"
+                           Text="{Binding DayText}"
+                           ToolTip="{Binding Tooltip}">
+                    <TextBlock.Style>
+                        <Style TargetType="TextBlock">
+                            <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}" />
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding IsInMonth}" Value="False">
+                                    <Setter Property="Foreground" Value="{StaticResource BorderStrongBrush}" />
+                                </DataTrigger>
+                                <DataTrigger Binding="{Binding HasBill}" Value="True">
+                                    <Setter Property="FontWeight" Value="Bold" />
+                                    <Setter Property="Foreground" Value="{StaticResource AccentBrush}" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </TextBlock.Style>
+                </TextBlock>
+            </Border>
+        </DataTemplate>
+    </UserControl.Resources>
+
+    <UserControl.InputBindings>
+        <KeyBinding Modifiers="Control" Key="N" Command="{Binding NewCommand}" />
+        <KeyBinding Key="F5" Command="{Binding RefreshCommand}" />
+        <KeyBinding Key="Enter" Command="{Binding EditCommand}" CommandParameter="{Binding Selected}" />
+    </UserControl.InputBindings>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <TextBlock Grid.Row="0" Style="{StaticResource SecondaryText}" Margin="0,0,0,12"
+                   Text="Recurring bills and deposits. Overdue rows are listed first — entering one records every occurrence it is behind, each on the day it was actually due." />
+
+        <!-- Empty state -->
+        <Border Grid.Row="1" Style="{StaticResource CardBorder}" VerticalAlignment="Top"
+                Visibility="{Binding IsEmpty, Converter={StaticResource BoolToVisibility}}">
+            <StackPanel>
+                <TextBlock Text="Nothing scheduled yet" Style="{StaticResource SubtitleText}" />
+                <TextBlock Style="{StaticResource SecondaryText}" Margin="0,8,0,12"
+                           TextWrapping="Wrap"
+                           Text="Schedule the bills and deposits that repeat — rent, salary, utilities — and this screen tells you what is due, what is behind, and what the account will hold once it has all gone out." />
+                <Button Style="{StaticResource PrimaryButton}" HorizontalAlignment="Left"
+                        Content="Schedule your first bill" Command="{Binding NewCommand}" />
+            </StackPanel>
+        </Border>
+
+        <DataGrid Grid.Row="1"
+                  Style="{StaticResource DataGridBase}"
+                  ItemsSource="{Binding Bills}"
+                  SelectedItem="{Binding Selected}"
+                  RowHeight="NaN"
+                  MinRowHeight="30"
+                  Visibility="{Binding IsEmpty, Converter={StaticResource NotBoolToVisibility}}">
+
+            <DataGrid.InputBindings>
+                <MouseBinding MouseAction="LeftDoubleClick"
+                              Command="{Binding EditCommand}"
+                              CommandParameter="{Binding Selected}" />
+            </DataGrid.InputBindings>
+
+            <DataGrid.Columns>
+                <!-- The payee cell carries the overdue warning underneath it, as the
+                     reference screen does, so the row explains itself without a tooltip. -->
+                <DataGridTemplateColumn Header="Payee" Width="2*">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <StackPanel Margin="8,4">
+                                <TextBlock Text="{Binding PayeeName}"
+                                           TextTrimming="CharacterEllipsis" />
+                                <TextBlock Text="{Binding OverdueText}"
+                                           FontSize="{StaticResource FontSizeSmall}"
+                                           Foreground="{StaticResource NegativeBrush}"
+                                           TextWrapping="Wrap"
+                                           Visibility="{Binding IsOverdue, Converter={StaticResource BoolToVisibility}}" />
+                            </StackPanel>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+
+                <DataGridTemplateColumn Header="Amount" Width="130">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <TextBlock Style="{StaticResource GridAmountText}"
+                                       Text="{Binding AmountText}"
+                                       ToolTip="A trailing tilde marks an estimated amount"
+                                       Foreground="{Binding Amount, Converter={StaticResource MoneyBrush}}" />
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+
+                <DataGridTextColumn Header="Due date" Width="110"
+                                    Binding="{Binding DueDateText}"
+                                    ElementStyle="{StaticResource GridCellText}" />
+
+                <DataGridTextColumn Header="Frequency" Width="150"
+                                    Binding="{Binding FrequencyText}"
+                                    ElementStyle="{StaticResource GridCellText}" />
+
+                <DataGridTextColumn Header="Payment method" Width="160"
+                                    Binding="{Binding PaymentMethodText}"
+                                    ElementStyle="{StaticResource GridCellText}" />
+
+                <DataGridTextColumn Header="Account" Width="*"
+                                    Binding="{Binding AccountName}"
+                                    ElementStyle="{StaticResource GridCellText}" />
+            </DataGrid.Columns>
+
+            <DataGrid.RowStyle>
+                <Style TargetType="DataGridRow">
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding IsOverdue}" Value="True">
+                            <Setter Property="Background" Value="#FFFDF3D8" />
+                        </DataTrigger>
+                        <DataTrigger Binding="{Binding IsInactive}" Value="True">
+                            <Setter Property="Opacity" Value="0.5" />
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </DataGrid.RowStyle>
+
+            <DataGrid.ContextMenu>
+                <ContextMenu>
+                    <MenuItem Header="Enter in register…"
+                              Command="{Binding PlacementTarget.DataContext.EnterInRegisterCommand,
+                                        RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                              CommandParameter="{Binding PlacementTarget.SelectedItem,
+                                        RelativeSource={RelativeSource AncestorType=ContextMenu}}" />
+                    <MenuItem Header="Skip this one…"
+                              Command="{Binding PlacementTarget.DataContext.SkipCommand,
+                                        RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                              CommandParameter="{Binding PlacementTarget.SelectedItem,
+                                        RelativeSource={RelativeSource AncestorType=ContextMenu}}" />
+                    <Separator />
+                    <MenuItem Header="Edit…"
+                              Command="{Binding PlacementTarget.DataContext.EditCommand,
+                                        RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                              CommandParameter="{Binding PlacementTarget.SelectedItem,
+                                        RelativeSource={RelativeSource AncestorType=ContextMenu}}" />
+                    <MenuItem Header="Delete…"
+                              Command="{Binding PlacementTarget.DataContext.DeleteCommand,
+                                        RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                              CommandParameter="{Binding PlacementTarget.SelectedItem,
+                                        RelativeSource={RelativeSource AncestorType=ContextMenu}}" />
+                </ContextMenu>
+            </DataGrid.ContextMenu>
+        </DataGrid>
+
+        <!-- Footer: the balance now and once everything scheduled has gone out. -->
+        <Border Grid.Row="2" Background="{StaticResource SurfaceSunkenBrush}"
+                BorderBrush="{StaticResource BorderBrush}" BorderThickness="1"
+                CornerRadius="6" Padding="16,10" Margin="0,12,0,0"
+                Visibility="{Binding IsEmpty, Converter={StaticResource NotBoolToVisibility}}">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+
+                <TextBlock Grid.Column="0" VerticalAlignment="Center"
+                           Style="{StaticResource SecondaryText}"
+                           Text="{Binding BalanceCaption}" />
+
+                <StackPanel Grid.Column="1" Margin="0,0,32,0">
+                    <TextBlock Text="Current" Style="{StaticResource FieldLabel}"
+                               HorizontalAlignment="Right" />
+                    <TextBlock FontFamily="{StaticResource NumericFontFamily}"
+                               HorizontalAlignment="Right"
+                               Text="{Binding CurrentBalanceText}"
+                               Foreground="{Binding CurrentBalance, Converter={StaticResource MoneyBrush}}" />
+                </StackPanel>
+
+                <StackPanel Grid.Column="2">
+                    <TextBlock Text="After" Style="{StaticResource FieldLabel}"
+                               HorizontalAlignment="Right"
+                               ToolTip="Once everything scheduled over the months shown below has gone out" />
+                    <TextBlock FontFamily="{StaticResource NumericFontFamily}"
+                               FontWeight="SemiBold"
+                               HorizontalAlignment="Right"
+                               Text="{Binding ProjectedBalanceText}"
+                               Foreground="{Binding ProjectedBalance, Converter={StaticResource MoneyBrush}}" />
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- Actions -->
+        <Grid Grid.Row="3" Margin="0,12,0,0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+
+            <TextBlock Grid.Column="0" VerticalAlignment="Center"
+                       Style="{StaticResource SecondaryText}"
+                       FontSize="{StaticResource FontSizeSmall}"
+                       Text="~ Estimate"
+                       Visibility="{Binding HasEstimates, Converter={StaticResource BoolToVisibility}}" />
+
+            <CheckBox Grid.Column="1" Margin="20,0,0,0" VerticalAlignment="Center"
+                      Content="Show calendar" IsChecked="{Binding ShowCalendar}" />
+
+            <Button Grid.Column="3" Style="{StaticResource PrimaryButton}"
+                    Content="Enter in register…"
+                    Command="{Binding EnterInRegisterCommand}"
+                    CommandParameter="{Binding Selected}" />
+
+            <Button Grid.Column="4" Margin="8,0,0,0" Style="{StaticResource SecondaryButton}"
+                    Content="New" Command="{Binding NewCommand}" />
+
+            <Button Grid.Column="5" Margin="8,0,0,0" Style="{StaticResource SecondaryButton}"
+                    Content="Edit" Command="{Binding EditCommand}"
+                    CommandParameter="{Binding Selected}" />
+
+            <Button Grid.Column="6" Margin="8,0,0,0" Style="{StaticResource SecondaryButton}"
+                    Content="Skip…" Command="{Binding SkipCommand}"
+                    CommandParameter="{Binding Selected}" />
+        </Grid>
+
+        <!-- Calendar strip -->
+        <Border Grid.Row="4" Style="{StaticResource CardBorder}" Margin="0,12,0,0"
+                Visibility="{Binding ShowCalendar, Converter={StaticResource BoolToVisibility}}">
+            <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
+                <ItemsControl ItemsSource="{Binding Calendar}">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <StackPanel Orientation="Horizontal" />
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <StackPanel Margin="0,0,20,0">
+                                <TextBlock Text="{Binding Header}"
+                                           FontWeight="SemiBold"
+                                           HorizontalAlignment="Center"
+                                           Margin="0,0,0,4" />
+
+                                <UniformGrid Columns="7" Rows="1" Margin="0,0,0,2">
+                                    <TextBlock Text="S" Style="{StaticResource FieldLabel}" HorizontalAlignment="Center" />
+                                    <TextBlock Text="M" Style="{StaticResource FieldLabel}" HorizontalAlignment="Center" />
+                                    <TextBlock Text="T" Style="{StaticResource FieldLabel}" HorizontalAlignment="Center" />
+                                    <TextBlock Text="W" Style="{StaticResource FieldLabel}" HorizontalAlignment="Center" />
+                                    <TextBlock Text="T" Style="{StaticResource FieldLabel}" HorizontalAlignment="Center" />
+                                    <TextBlock Text="F" Style="{StaticResource FieldLabel}" HorizontalAlignment="Center" />
+                                    <TextBlock Text="S" Style="{StaticResource FieldLabel}" HorizontalAlignment="Center" />
+                                </UniformGrid>
+
+                                <ItemsControl ItemsSource="{Binding Days}"
+                                              ItemTemplate="{StaticResource CalendarDayTemplate}">
+                                    <ItemsControl.ItemsPanel>
+                                        <ItemsPanelTemplate>
+                                            <UniformGrid Columns="7" />
+                                        </ItemsPanelTemplate>
+                                    </ItemsControl.ItemsPanel>
+                                </ItemsControl>
+                            </StackPanel>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </ScrollViewer>
+        </Border>
+    </Grid>
+</UserControl>

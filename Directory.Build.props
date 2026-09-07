@@ -1,0 +1,34 @@
+<Project>
+
+  <PropertyGroup>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <EnforceCodeStyleInBuild>false</EnforceCodeStyleInBuild>
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+
+    <!--
+      WPF/WinForms projects normally refuse to restore on a non-Windows host.
+      This lets the whole solution build (but not run) on Linux CI and dev boxes;
+      it has no effect when building on Windows.
+    -->
+    <EnableWindowsTargeting>true</EnableWindowsTargeting>
+
+    <!-- Money is a US-desktop app; keep real globalization data for currency + date parsing. -->
+    <InvariantGlobalization>false</InvariantGlobalization>
+
+    <Product>MyFinance</Product>
+    <Company>MyFinance</Company>
+    <Copyright>Copyright © 2026 The MyFinance Authors</Copyright>
+
+    <!--
+      Apache-2.0, chosen so the Money reader can be reused anywhere: see docs/dev/licensing.md
+      for why, and NOTICE at the repository root for what the executable carries.
+    -->
+    <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
+    <NeutralLanguage>en</NeutralLanguage>
+    <Version>1.0.0</Version>
+  </PropertyGroup>
+
+</Project>

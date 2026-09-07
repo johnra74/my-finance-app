@@ -1,0 +1,277 @@
+<UserControl x:Class="MyFinance.App.Views.Pages.HomePage"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:conv="clr-namespace:MyFinance.App.Converters">
+
+    <UserControl.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVisibility" />
+        <conv:InverseBooleanToVisibilityConverter x:Key="NotBoolToVisibility" />
+        <conv:MoneySignBrushConverter x:Key="MoneyBrush" />
+        <conv:CountToVisibilityConverter x:Key="CountToVisibility" />
+
+        <!-- A due bill. Overdue is called out in words as well as in red, because a colour
+             alone is not something everyone can read. -->
+        <DataTemplate x:Key="ReminderTemplate">
+            <Grid Margin="0,5">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+
+                <TextBlock Grid.Column="0" Style="{StaticResource ChartLabelText}"
+                           Text="{Binding PayeeName}" />
+
+                <TextBlock Grid.Column="1" Margin="12,0,0,0" MinWidth="88"
+                           TextAlignment="Right" VerticalAlignment="Center"
+                           Style="{StaticResource ChartAxisText}"
+                           Text="{Binding DueText}" />
+
+                <TextBlock Grid.Column="2" Margin="12,0,0,0" MinWidth="96"
+                           TextAlignment="Right" VerticalAlignment="Center"
+                           Style="{StaticResource ChartValueText}"
+                           Text="{Binding AmountText}"
+                           Foreground="{Binding Amount, Converter={StaticResource MoneyBrush}}" />
+            </Grid>
+        </DataTemplate>
+    </UserControl.Resources>
+
+    <UserControl.InputBindings>
+        <KeyBinding Key="F5" Command="{Binding RefreshCommand}" />
+    </UserControl.InputBindings>
+
+    <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <StackPanel>
+            <!-- The one figure the whole book adds up to, before any tile. -->
+            <Border Style="{StaticResource CardBorder}" Margin="0,0,0,16">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+
+                    <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                        <TextBlock Text="Where you stand" Style="{StaticResource FieldLabel}" />
+                        <TextBlock Style="{StaticResource SecondaryText}" Text="{Binding TodayText}" />
+                    </StackPanel>
+
+                    <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                        <TextBlock Style="{StaticResource PageTitleText}"
+                                   TextAlignment="Right"
+                                   Text="{Binding NetWorthText}"
+                                   Foreground="{Binding NetWorth, Converter={StaticResource MoneyBrush}}" />
+                        <TextBlock Style="{StaticResource ChartAxisText}"
+                                   TextAlignment="Right"
+                                   Text="everything you own, less everything you owe" />
+                    </StackPanel>
+                </Grid>
+            </Border>
+
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="380" />
+                </Grid.ColumnDefinitions>
+
+                <!-- Left: accounts, then where the money went. -->
+                <StackPanel Grid.Column="0" Margin="0,0,16,0">
+                    <Border Style="{StaticResource CardBorder}" Margin="0,0,0,16">
+                        <StackPanel>
+                            <TextBlock Text="Accounts" Style="{StaticResource SubtitleText}"
+                                       Margin="0,0,0,10" />
+
+                            <ItemsControl ItemsSource="{Binding Favourites}"
+                                          Visibility="{Binding HasFavourites, Converter={StaticResource BoolToVisibility}}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Grid Margin="0,4">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="Auto" />
+                                            </Grid.ColumnDefinitions>
+
+                                            <Button Grid.Column="0" Style="{StaticResource LinkButton}"
+                                                    HorizontalAlignment="Left"
+                                                    Content="{Binding Name}"
+                                                    ToolTip="Open this register"
+                                                    Command="{Binding DataContext.OpenAccountCommand,
+                                                              RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                    CommandParameter="{Binding}" />
+
+                                            <TextBlock Grid.Column="1" Margin="12,0,0,0"
+                                                       MinWidth="120" TextAlignment="Right"
+                                                       VerticalAlignment="Center"
+                                                       Style="{StaticResource ChartValueText}"
+                                                       Text="{Binding BalanceText}"
+                                                       Foreground="{Binding Balance, Converter={StaticResource MoneyBrush}}" />
+                                        </Grid>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+
+                            <TextBlock Style="{StaticResource SecondaryText}"
+                                       TextWrapping="Wrap"
+                                       Text="No accounts yet. Add one from the Banking section and it will show up here."
+                                       Visibility="{Binding HasFavourites, Converter={StaticResource NotBoolToVisibility}}" />
+                        </StackPanel>
+                    </Border>
+
+                    <!--
+                        Bars rather than the pie the original used. These category names are
+                        long — "Bills : Water and Sewer" — and a pie pushes them into a
+                        legend the reader has to match back to slices by colour. A bar keeps
+                        the name against its length, and two close categories stay tellable
+                        apart. One hue throughout: the length already carries the value.
+                    -->
+                    <Border Style="{StaticResource CardBorder}" Margin="0,0,0,16">
+                        <StackPanel>
+                            <Grid Margin="0,0,0,4">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+
+                                <TextBlock Grid.Column="0" Text="Where the money went"
+                                           Style="{StaticResource SubtitleText}" />
+
+                                <TextBlock Grid.Column="1"
+                                           FontFamily="{StaticResource NumericFontFamily}"
+                                           FontSize="{StaticResource FontSizeSubtitle}"
+                                           FontWeight="SemiBold"
+                                           Foreground="{StaticResource TextPrimaryBrush}"
+                                           Text="{Binding SpendingTotalText}" />
+                            </Grid>
+
+                            <TextBlock Style="{StaticResource SecondaryText}" Margin="0,0,0,12"
+                                       Text="{Binding SpendingPeriodText}" />
+
+                            <ItemsControl ItemsSource="{Binding Spending}"
+                                          ItemTemplate="{StaticResource HorizontalBarTemplate}"
+                                          Visibility="{Binding HasSpending, Converter={StaticResource BoolToVisibility}}" />
+
+                            <TextBlock Style="{StaticResource SecondaryText}"
+                                       TextWrapping="Wrap"
+                                       Text="Nothing has been spent in the last thirty days — or nothing has been entered yet."
+                                       Visibility="{Binding HasSpending, Converter={StaticResource NotBoolToVisibility}}" />
+
+                            <Border Margin="0,12,0,0" Padding="12,8" CornerRadius="6"
+                                    Background="{StaticResource SurfaceAltBrush}"
+                                    BorderBrush="{StaticResource WarningBrush}"
+                                    BorderThickness="1"
+                                    Visibility="{Binding HasUncategorized, Converter={StaticResource BoolToVisibility}}">
+                                <TextBlock Style="{StaticResource BodyText}"
+                                           TextWrapping="Wrap"
+                                           Text="{Binding UncategorizedWarning}" />
+                            </Border>
+
+                            <Button Style="{StaticResource LinkButton}"
+                                    HorizontalAlignment="Left" Margin="0,12,0,0"
+                                    Content="Open the reports"
+                                    Command="{Binding GoToReportsCommand}" />
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+
+                <!-- Right: what needs doing, and what is running hot. -->
+                <StackPanel Grid.Column="1">
+                    <Border Style="{StaticResource CardBorder}" Margin="0,0,0,16">
+                        <StackPanel>
+                            <TextBlock Text="Bills and deposits" Style="{StaticResource SubtitleText}"
+                                       Margin="0,0,0,10" />
+
+                            <StackPanel Visibility="{Binding Overdue.Count, Converter={StaticResource CountToVisibility}}">
+                                <TextBlock Text="Overdue" Style="{StaticResource FieldLabel}"
+                                           Foreground="{StaticResource NegativeBrush}" />
+                                <ItemsControl ItemsSource="{Binding Overdue}"
+                                              ItemTemplate="{StaticResource ReminderTemplate}"
+                                              Margin="0,4,0,12" />
+                            </StackPanel>
+
+                            <StackPanel Visibility="{Binding Upcoming.Count, Converter={StaticResource CountToVisibility}}">
+                                <TextBlock Text="Due in the next month" Style="{StaticResource FieldLabel}" />
+                                <ItemsControl ItemsSource="{Binding Upcoming}"
+                                              ItemTemplate="{StaticResource ReminderTemplate}"
+                                              Margin="0,4,0,0" />
+                            </StackPanel>
+
+                            <TextBlock Style="{StaticResource SecondaryText}"
+                                       TextWrapping="Wrap"
+                                       Text="Nothing is due in the next month."
+                                       Visibility="{Binding HasBills, Converter={StaticResource NotBoolToVisibility}}" />
+
+                            <Button Style="{StaticResource LinkButton}"
+                                    HorizontalAlignment="Left" Margin="0,12,0,0"
+                                    Content="All bills and deposits"
+                                    Command="{Binding GoToBillsCommand}" />
+                        </StackPanel>
+                    </Border>
+
+                    <Border Style="{StaticResource CardBorder}"
+                            Visibility="{Binding HasWatched, Converter={StaticResource BoolToVisibility}}">
+                        <StackPanel>
+                            <TextBlock Text="Categories you are watching" Style="{StaticResource SubtitleText}" />
+                            <TextBlock Style="{StaticResource SecondaryText}" Margin="0,4,0,12"
+                                       Text="This month so far." />
+
+                            <ItemsControl ItemsSource="{Binding Watched}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <StackPanel Margin="0,0,0,12">
+                                            <Grid>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="*" />
+                                                    <ColumnDefinition Width="Auto" />
+                                                </Grid.ColumnDefinitions>
+
+                                                <TextBlock Grid.Column="0"
+                                                           Style="{StaticResource ChartLabelText}"
+                                                           Text="{Binding CategoryPath}"
+                                                           ToolTip="{Binding CategoryPath}" />
+
+                                                <TextBlock Grid.Column="1" Margin="12,0,0,0"
+                                                           Style="{StaticResource ChartValueText}"
+                                                           Text="{Binding Spent, StringFormat={}{0:C}}" />
+                                            </Grid>
+
+                                            <!-- Only a budgeted category gets a meter: a bar
+                                                 with no target to measure against would be
+                                                 drawing a fraction of nothing. -->
+                                            <Grid Margin="0,6,0,0"
+                                                  Visibility="{Binding HasBudget, Converter={StaticResource BoolToVisibility}}">
+                                                <Border x:Name="Track"
+                                                        Background="{StaticResource ChartTrackBrush}"
+                                                        CornerRadius="4" Height="10" />
+                                                <Rectangle Height="10" HorizontalAlignment="Left"
+                                                           RadiusX="4" RadiusY="4"
+                                                           Fill="{Binding Progress, Converter={StaticResource BudgetStatusBrush}}">
+                                                    <Rectangle.Width>
+                                                        <MultiBinding Converter="{StaticResource FractionToWidth}">
+                                                            <Binding Path="ProgressCapped" />
+                                                            <Binding Path="ActualWidth" ElementName="Track" />
+                                                        </MultiBinding>
+                                                    </Rectangle.Width>
+                                                </Rectangle>
+                                            </Grid>
+
+                                            <TextBlock Style="{StaticResource ChartAxisText}"
+                                                       Margin="0,4,0,0"
+                                                       Visibility="{Binding HasBudget, Converter={StaticResource BoolToVisibility}}">
+                                                <Run Text="{Binding Budgeted, StringFormat={}{0:C}, Mode=OneWay}" />
+                                                <Run Text=" budgeted" />
+                                            </TextBlock>
+                                        </StackPanel>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+
+                            <Button Style="{StaticResource LinkButton}"
+                                    HorizontalAlignment="Left" Margin="0,4,0,0"
+                                    Content="Open the budget"
+                                    Command="{Binding GoToBudgetCommand}" />
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+            </Grid>
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

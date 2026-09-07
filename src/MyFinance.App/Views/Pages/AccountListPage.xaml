@@ -1,0 +1,228 @@
+<UserControl x:Class="MyFinance.App.Views.Pages.AccountListPage"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:conv="clr-namespace:MyFinance.App.Converters">
+
+    <UserControl.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVisibility" />
+        <conv:MoneyConverter x:Key="Money" />
+        <conv:MoneySignBrushConverter x:Key="MoneyBrush" />
+        <conv:CountToVisibilityConverter x:Key="CountToVisibility" />
+        <conv:InverseBooleanToVisibilityConverter x:Key="NotBoolToVisibility" />
+    </UserControl.Resources>
+
+    <UserControl.InputBindings>
+        <KeyBinding Modifiers="Control" Key="N" Command="{Binding NewAccountCommand}" />
+        <KeyBinding Key="F5" Command="{Binding RefreshCommand}" />
+        <KeyBinding Key="Enter"
+                    Command="{Binding OpenRegisterCommand}"
+                    CommandParameter="{Binding SelectedAccount}" />
+    </UserControl.InputBindings>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <!-- Toolbar -->
+        <Grid Grid.Row="0" Margin="0,0,0,12">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+
+            <Button Grid.Column="0" Style="{StaticResource PrimaryButton}"
+                    Content="New account" Command="{Binding NewAccountCommand}" />
+
+            <Button Grid.Column="1" Margin="8,0,0,0" Style="{StaticResource SecondaryButton}"
+                    Content="Open register" Command="{Binding OpenRegisterCommand}"
+                    CommandParameter="{Binding SelectedAccount}" />
+
+            <Button Grid.Column="2" Margin="8,0,0,0" Style="{StaticResource SecondaryButton}"
+                    Content="Details" Command="{Binding EditAccountCommand}"
+                    CommandParameter="{Binding SelectedAccount}" />
+
+            <Button Grid.Column="3" Margin="8,0,0,0" Style="{StaticResource SecondaryButton}"
+                    Content="Delete" Command="{Binding DeleteAccountCommand}"
+                    CommandParameter="{Binding SelectedAccount}" />
+
+            <CheckBox Grid.Column="5" VerticalAlignment="Center"
+                      Content="Show closed accounts"
+                      IsChecked="{Binding ShowClosedAccounts}" />
+        </Grid>
+
+        <!-- Empty state: a book with no accounts needs to say what to do next, not sit blank. -->
+        <Border Grid.Row="1" Style="{StaticResource CardBorder}" VerticalAlignment="Top"
+                Visibility="{Binding IsEmpty, Converter={StaticResource BoolToVisibility}}">
+            <StackPanel>
+                <TextBlock Text="No accounts yet" Style="{StaticResource SubtitleText}" />
+                <TextBlock Style="{StaticResource SecondaryText}" Margin="0,8,0,12"
+                           Text="Add a checking account, a savings account or a credit card to start. You can enter its current balance as the opening balance and work forward from there." />
+                <Button Style="{StaticResource PrimaryButton}" HorizontalAlignment="Left"
+                        Content="Add your first account" Command="{Binding NewAccountCommand}" />
+            </StackPanel>
+        </Border>
+
+        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto"
+                      Visibility="{Binding IsEmpty, Converter={StaticResource NotBoolToVisibility}}">
+            <ItemsControl ItemsSource="{Binding Groups}">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <Border Style="{StaticResource CardBorder}" Margin="0,0,0,16">
+                            <StackPanel>
+                                <!-- Group heading with its subtotal on the right -->
+                                <Grid Margin="0,0,0,10">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+
+                                    <TextBlock Grid.Column="0" Text="{Binding Header}"
+                                               Style="{StaticResource SubtitleText}" />
+
+                                    <TextBlock Grid.Column="1"
+                                               FontFamily="{StaticResource NumericFontFamily}"
+                                               FontSize="{StaticResource FontSizeSubtitle}"
+                                               FontWeight="SemiBold"
+                                               Text="{Binding Subtotal, Converter={StaticResource Money}}"
+                                               Foreground="{Binding Subtotal, Converter={StaticResource MoneyBrush}}" />
+                                </Grid>
+
+                                <!-- One grid per group. SelectedItem only pushes outwards:
+                                     bound two-way, each grid would coerce the page's
+                                     selection to null whenever it held a row from a
+                                     different group, clearing the selection on every click.
+                                     Tag carries the page view model to the context menu,
+                                     which lives outside the visual tree. -->
+                                <DataGrid Style="{StaticResource DataGridBase}"
+                                          ItemsSource="{Binding Accounts}"
+                                          Tag="{Binding DataContext,
+                                                RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                          SelectedItem="{Binding DataContext.SelectedAccount,
+                                                         RelativeSource={RelativeSource AncestorType=UserControl},
+                                                         Mode=OneWayToSource}">
+                                    <DataGrid.InputBindings>
+                                        <MouseBinding MouseAction="LeftDoubleClick"
+                                                      Command="{Binding DataContext.OpenRegisterCommand,
+                                                                RelativeSource={RelativeSource AncestorType=UserControl}}" />
+                                    </DataGrid.InputBindings>
+
+                                    <DataGrid.Columns>
+                                        <DataGridTemplateColumn Header="Account" Width="*">
+                                            <DataGridTemplateColumn.CellTemplate>
+                                                <DataTemplate>
+                                                    <StackPanel Margin="8,4">
+                                                        <TextBlock Text="{Binding Name}"
+                                                                   FontWeight="SemiBold"
+                                                                   Foreground="{StaticResource TextPrimaryBrush}" />
+                                                        <TextBlock Text="{Binding UncategorizedText}"
+                                                                   FontSize="{StaticResource FontSizeSmall}"
+                                                                   Foreground="{StaticResource WarningBrush}"
+                                                                   Visibility="{Binding UncategorizedCount,
+                                                                                Converter={StaticResource CountToVisibility}}" />
+                                                    </StackPanel>
+                                                </DataTemplate>
+                                            </DataGridTemplateColumn.CellTemplate>
+                                        </DataGridTemplateColumn>
+
+                                        <DataGridTextColumn Header="Institution" Width="150"
+                                                            Binding="{Binding Institution}"
+                                                            ElementStyle="{StaticResource GridCellText}" />
+
+                                        <DataGridTextColumn Header="Number" Width="130"
+                                                            Binding="{Binding AccountNumberMasked}"
+                                                            ElementStyle="{StaticResource GridCellText}" />
+
+                                        <DataGridTextColumn Header="Transactions" Width="110"
+                                                            Binding="{Binding TransactionCountText}"
+                                                            ElementStyle="{StaticResource GridCellText}" />
+
+                                        <DataGridTextColumn Header="Bank balance" Width="130"
+                                                            Binding="{Binding ClearedBalance, Converter={StaticResource Money}}"
+                                                            ElementStyle="{StaticResource GridAmountText}" />
+
+                                        <DataGridTemplateColumn Header="Balance" Width="140">
+                                            <DataGridTemplateColumn.CellTemplate>
+                                                <DataTemplate>
+                                                    <TextBlock Style="{StaticResource GridAmountText}"
+                                                               FontWeight="SemiBold"
+                                                               Text="{Binding CurrentBalance, Converter={StaticResource Money}}"
+                                                               Foreground="{Binding CurrentBalance, Converter={StaticResource MoneyBrush}}" />
+                                                </DataTemplate>
+                                            </DataGridTemplateColumn.CellTemplate>
+                                        </DataGridTemplateColumn>
+                                    </DataGrid.Columns>
+
+                                    <DataGrid.RowStyle>
+                                        <Style TargetType="DataGridRow">
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IsClosed}" Value="True">
+                                                    <Setter Property="Foreground"
+                                                            Value="{StaticResource TextSecondaryBrush}" />
+                                                    <Setter Property="Opacity" Value="0.65" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </DataGrid.RowStyle>
+
+                                    <DataGrid.ContextMenu>
+                                        <ContextMenu>
+                                            <MenuItem Header="Open register"
+                                                      Command="{Binding PlacementTarget.Tag.OpenRegisterCommand,
+                                                                RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                                                      CommandParameter="{Binding PlacementTarget.SelectedItem,
+                                                                RelativeSource={RelativeSource AncestorType=ContextMenu}}" />
+                                            <MenuItem Header="Account details…"
+                                                      Command="{Binding PlacementTarget.Tag.EditAccountCommand,
+                                                                RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                                                      CommandParameter="{Binding PlacementTarget.SelectedItem,
+                                                                RelativeSource={RelativeSource AncestorType=ContextMenu}}" />
+                                            <Separator />
+                                            <MenuItem Header="Close or reopen account"
+                                                      Command="{Binding PlacementTarget.Tag.ToggleClosedCommand,
+                                                                RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                                                      CommandParameter="{Binding PlacementTarget.SelectedItem,
+                                                                RelativeSource={RelativeSource AncestorType=ContextMenu}}" />
+                                            <MenuItem Header="Delete account…"
+                                                      Command="{Binding PlacementTarget.Tag.DeleteAccountCommand,
+                                                                RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                                                      CommandParameter="{Binding PlacementTarget.SelectedItem,
+                                                                RelativeSource={RelativeSource AncestorType=ContextMenu}}" />
+                                        </ContextMenu>
+                                    </DataGrid.ContextMenu>
+                                </DataGrid>
+                            </StackPanel>
+                        </Border>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </ScrollViewer>
+
+        <!-- Grand total -->
+        <Border Grid.Row="2" Background="{StaticResource SurfaceSunkenBrush}"
+                BorderBrush="{StaticResource BorderBrush}" BorderThickness="1"
+                CornerRadius="6" Padding="16,12" Margin="0,4,0,0"
+                Visibility="{Binding IsEmpty, Converter={StaticResource NotBoolToVisibility}}">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+
+                <TextBlock Grid.Column="0" Text="Total" Style="{StaticResource SubtitleText}" />
+                <TextBlock Grid.Column="1"
+                           FontFamily="{StaticResource NumericFontFamily}"
+                           FontSize="{StaticResource FontSizeTitle}"
+                           FontWeight="SemiBold"
+                           Text="{Binding TotalText}"
+                           Foreground="{Binding Total, Converter={StaticResource MoneyBrush}}" />
+            </Grid>
+        </Border>
+    </Grid>
+</UserControl>

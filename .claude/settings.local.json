@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python3 -)",
+      "Bash(sed -n '/## Gaps — five built/,/^## Gaps — tabled/p' README.md)"
+    ]
+  }
+}

@@ -1,0 +1,97 @@
+<Window x:Class="MyFinance.App.Views.Dialogs.RuleEditorWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:conv="clr-namespace:MyFinance.App.Converters"
+        Title="{Binding Title}"
+        Width="560" SizeToContent="Height"
+        ResizeMode="NoResize"
+        ShowInTaskbar="False"
+        Background="{StaticResource SurfaceBrush}"
+        FontFamily="{StaticResource UiFontFamily}"
+        FontSize="{StaticResource FontSizeBody}">
+
+    <Window.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVisibility" />
+        <conv:NullToVisibilityConverter x:Key="NullToVisibility" />
+    </Window.Resources>
+
+    <StackPanel Margin="24">
+        <TextBlock Text="Name" Style="{StaticResource FieldLabel}" />
+        <TextBox Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}"
+                 ToolTip="What this rule is for, in your own words" />
+
+        <TextBlock Text="When" Style="{StaticResource FieldLabel}" Margin="0,16,0,4" />
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="8" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+
+            <ComboBox Grid.Column="0"
+                      ItemsSource="{Binding Fields}"
+                      DisplayMemberPath="Text"
+                      SelectedItem="{Binding SelectedField}" />
+
+            <ComboBox Grid.Column="2"
+                      ItemsSource="{Binding Kinds}"
+                      DisplayMemberPath="Text"
+                      SelectedItem="{Binding SelectedKind}"
+                      IsEnabled="{Binding IsTextCondition}" />
+        </Grid>
+
+        <TextBox Margin="0,8,0,0"
+                 Text="{Binding Pattern, UpdateSourceTrigger=PropertyChanged}" />
+
+        <TextBlock Style="{StaticResource SecondaryText}"
+                   FontSize="{StaticResource FontSizeSmall}"
+                   Margin="0,4,0,0"
+                   TextWrapping="Wrap"
+                   Text="{Binding PatternHint}" />
+
+        <CheckBox Content="Match capital letters exactly" Margin="0,10,0,0"
+                  IsChecked="{Binding IsCaseSensitive}"
+                  Visibility="{Binding IsTextCondition, Converter={StaticResource BoolToVisibility}}" />
+
+        <TextBlock Text="Then file it under" Style="{StaticResource FieldLabel}" Margin="0,16,0,4" />
+        <ComboBox ItemsSource="{Binding Categories}"
+                  DisplayMemberPath="FullName"
+                  SelectedItem="{Binding SelectedCategory}" />
+
+        <TextBlock Text="And rename the payee to (optional)" Style="{StaticResource FieldLabel}"
+                   Margin="0,14,0,4" />
+        <ComboBox ItemsSource="{Binding Payees}"
+                  DisplayMemberPath="Name"
+                  SelectedItem="{Binding SelectedPayee}" />
+
+        <TextBlock Text="Only for this account (optional)" Style="{StaticResource FieldLabel}"
+                   Margin="0,14,0,4" />
+        <ComboBox ItemsSource="{Binding Accounts}"
+                  DisplayMemberPath="Name"
+                  SelectedItem="{Binding SelectedAccount}" />
+
+        <CheckBox Content="Rule is active" Margin="0,14,0,0" IsChecked="{Binding IsEnabled}" />
+
+        <!-- Trying a rule against the register is how you find out it says what you meant
+             before it runs against three hundred imported rows. -->
+        <StackPanel Orientation="Horizontal" Margin="0,16,0,0">
+            <Button Style="{StaticResource SecondaryButton}"
+                    Content="Try it on my register" Command="{Binding TestCommand}" />
+            <TextBlock VerticalAlignment="Center" Margin="12,0,0,0"
+                       Style="{StaticResource SecondaryText}"
+                       Text="{Binding TestResult}" />
+        </StackPanel>
+
+        <TextBlock Style="{StaticResource ErrorText}" Margin="0,14,0,0"
+                   TextWrapping="Wrap"
+                   Text="{Binding ErrorMessage}"
+                   Visibility="{Binding HasError, Converter={StaticResource BoolToVisibility}}" />
+
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,20,0,0">
+            <Button Style="{StaticResource SecondaryButton}" Content="Cancel"
+                    IsCancel="True" Command="{Binding CancelCommand}" />
+            <Button Style="{StaticResource PrimaryButton}" Content="Save" Margin="8,0,0,0"
+                    IsDefault="True" Command="{Binding SaveCommand}" />
+        </StackPanel>
+    </StackPanel>
+</Window>

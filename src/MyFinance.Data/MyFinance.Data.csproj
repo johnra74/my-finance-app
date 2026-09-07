@@ -1,0 +1,41 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>MyFinance.Data</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.EntityFrameworkCore" />
+    <!--
+      Design-time only: it exists so `dotnet ef migrations` works and is not part of the
+      shipped application. contentfiles is deliberately left out of the default list —
+      it carries Roslyn's MSBuild build host, which otherwise lands beside the published
+      executable as two folders that have no business being there.
+    -->
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite.Core" />
+    <PackageReference Include="Microsoft.Data.Sqlite.Core" />
+    <PackageReference Include="SQLitePCLRaw.bundle_e_sqlcipher" />
+    <PackageReference Include="Konscious.Security.Cryptography.Argon2" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\MyFinance.Core\MyFinance.Core.csproj" />
+    <!--
+      The import orchestration lives here rather than in MyFinance.Import because it has to
+      call PayeeService.ResolveAsync, which is internal to this assembly: creating a payee
+      and the transaction that names it must be one atomic write. MyFinance.Import stays
+      free of any database dependency so its parsing and matching stay fast to test.
+    -->
+    <ProjectReference Include="..\MyFinance.Import\MyFinance.Import.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="MyFinance.Data.Tests" />
+  </ItemGroup>
+
+</Project>

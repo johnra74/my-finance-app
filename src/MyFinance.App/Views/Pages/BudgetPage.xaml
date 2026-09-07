@@ -1,0 +1,292 @@
+<UserControl x:Class="MyFinance.App.Views.Pages.BudgetPage"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:conv="clr-namespace:MyFinance.App.Converters">
+
+    <UserControl.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVisibility" />
+        <conv:InverseBooleanToVisibilityConverter x:Key="NotBoolToVisibility" />
+        <conv:MoneySignBrushConverter x:Key="MoneyBrush" />
+        <conv:InverseBooleanConverter x:Key="InverseBoolean" />
+        <conv:CountToVisibilityConverter x:Key="CountToVisibility" />
+
+        <!-- A row is flat: the meter is the thing being read, and a selection chrome box
+             around it would compete with the bar for the eye. -->
+        <Style x:Key="BudgetRowContainer" TargetType="ListBoxItem">
+            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="Margin" Value="0" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ListBoxItem">
+                        <Border x:Name="Chrome" Background="Transparent" CornerRadius="4" Padding="8,6">
+                            <ContentPresenter />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Chrome" Property="Background"
+                                        Value="{StaticResource SurfaceAltBrush}" />
+                            </Trigger>
+                            <Trigger Property="IsSelected" Value="True">
+                                <Setter TargetName="Chrome" Property="Background"
+                                        Value="{StaticResource AccentSoftBrush}" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!--
+            One budget line. The meter is coloured by status, so the same fact is always
+            written beside it in words — a status colour never carries meaning on its own,
+            and the warning step in particular sits below 3:1 on this surface by design.
+        -->
+        <DataTemplate x:Key="BudgetRowTemplate">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="240" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+
+                <TextBlock Grid.Row="0" Grid.Column="0" Margin="0,0,12,0"
+                           Style="{StaticResource ChartLabelText}"
+                           Text="{Binding CategoryPath}"
+                           ToolTip="{Binding CategoryPath}" />
+
+                <TextBlock Grid.Row="1" Grid.Column="0" Margin="0,2,12,0"
+                           Style="{StaticResource ChartAxisText}"
+                           TextTrimming="CharacterEllipsis"
+                           Text="{Binding RolloverText}" />
+
+                <Border Grid.Row="0" Grid.Column="1" x:Name="Track"
+                        Background="{StaticResource ChartTrackBrush}"
+                        CornerRadius="4" Height="14"
+                        VerticalAlignment="Center"
+                        HorizontalAlignment="Stretch" />
+
+                <Rectangle Grid.Row="0" Grid.Column="1"
+                           Height="14" VerticalAlignment="Center"
+                           HorizontalAlignment="Left"
+                           RadiusX="4" RadiusY="4"
+                           Fill="{Binding Progress, Converter={StaticResource BudgetStatusBrush}}"
+                           ToolTip="{Binding StatusText}">
+                    <Rectangle.Width>
+                        <MultiBinding Converter="{StaticResource FractionToWidth}">
+                            <Binding Path="ProgressCapped" />
+                            <Binding Path="ActualWidth" ElementName="Track" />
+                        </MultiBinding>
+                    </Rectangle.Width>
+                </Rectangle>
+
+                <TextBlock Grid.Row="1" Grid.Column="1" Margin="0,4,0,0"
+                           Style="{StaticResource ChartAxisText}"
+                           Text="{Binding StatusText}" />
+
+                <StackPanel Grid.Row="0" Grid.RowSpan="2" Grid.Column="2"
+                            Margin="16,0,0,0" VerticalAlignment="Center">
+                    <TextBlock Style="{StaticResource ChartValueText}"
+                               TextAlignment="Right" MinWidth="170">
+                        <Run Text="{Binding ActualText, Mode=OneWay}" />
+                        <Run Text=" of " Foreground="{StaticResource ChartMutedInkBrush}" />
+                        <Run Text="{Binding BudgetedText, Mode=OneWay}" />
+                    </TextBlock>
+                    <TextBlock Style="{StaticResource ChartAxisText}"
+                               TextAlignment="Right"
+                               Text="{Binding ProgressText}" />
+                </StackPanel>
+            </Grid>
+        </DataTemplate>
+    </UserControl.Resources>
+
+    <UserControl.InputBindings>
+        <KeyBinding Modifiers="Control" Key="N" Command="{Binding EditCommand}" />
+        <KeyBinding Key="F5" Command="{Binding RefreshCommand}" />
+        <KeyBinding Key="Enter" Command="{Binding EditCommand}" CommandParameter="{Binding Selected}" />
+        <KeyBinding Key="Delete" Command="{Binding ClearCommand}" CommandParameter="{Binding Selected}" />
+    </UserControl.InputBindings>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <!-- Period controls in one row above the figures. -->
+        <Grid Grid.Row="0" Margin="0,0,0,12">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+
+            <Button Grid.Column="0" Style="{StaticResource SecondaryButton}"
+                    Content="◀" Width="34"
+                    ToolTip="The month before"
+                    Command="{Binding PreviousMonthCommand}"
+                    IsEnabled="{Binding ShowYear, Converter={StaticResource InverseBoolean}}" />
+
+            <TextBlock Grid.Column="1" VerticalAlignment="Center" Margin="12,0"
+                       MinWidth="170" TextAlignment="Center"
+                       Style="{StaticResource SubtitleText}"
+                       Text="{Binding PeriodLabel}" />
+
+            <Button Grid.Column="2" Style="{StaticResource SecondaryButton}"
+                    Content="▶" Width="34"
+                    ToolTip="The month after"
+                    Command="{Binding NextMonthCommand}"
+                    IsEnabled="{Binding ShowYear, Converter={StaticResource InverseBoolean}}" />
+
+            <CheckBox Grid.Column="4" VerticalAlignment="Center"
+                      Content="Show the whole year"
+                      IsChecked="{Binding ShowYear}" />
+        </Grid>
+
+        <!-- The four figures that answer "how am I doing", before any category detail. -->
+        <Border Grid.Row="1" Style="{StaticResource CardBorder}" Margin="0,0,0,16"
+                Visibility="{Binding IsEmpty, Converter={StaticResource NotBoolToVisibility}}">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+
+                <StackPanel Grid.Column="0">
+                    <TextBlock Text="Budgeted to spend" Style="{StaticResource FieldLabel}" />
+                    <TextBlock Style="{StaticResource PageTitleText}" Text="{Binding BudgetedSpendingText}" />
+                </StackPanel>
+
+                <StackPanel Grid.Column="1">
+                    <TextBlock Text="Actually spent" Style="{StaticResource FieldLabel}" />
+                    <TextBlock Style="{StaticResource PageTitleText}" Text="{Binding ActualSpendingText}" />
+                </StackPanel>
+
+                <StackPanel Grid.Column="2">
+                    <TextBlock Text="Left to spend" Style="{StaticResource FieldLabel}" />
+                    <TextBlock Style="{StaticResource PageTitleText}"
+                               Text="{Binding RemainingToSpendText}"
+                               Foreground="{Binding RemainingToSpend, Converter={StaticResource MoneyBrush}}" />
+                </StackPanel>
+
+                <StackPanel Grid.Column="3">
+                    <TextBlock Text="In against out" Style="{StaticResource FieldLabel}" />
+                    <TextBlock Style="{StaticResource PageTitleText}"
+                               Text="{Binding ActualNetText}"
+                               ToolTip="Income received less money spent, so far this period"
+                               Foreground="{Binding ActualNet, Converter={StaticResource MoneyBrush}}" />
+                    <TextBlock Style="{StaticResource SecondaryText}"
+                               FontSize="{StaticResource FontSizeSmall}"
+                               Margin="0,4,0,0"
+                               Text="{Binding OverBudgetText}" />
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <Border Grid.Row="2" Style="{StaticResource CardBorder}" VerticalAlignment="Top"
+                Visibility="{Binding IsEmpty, Converter={StaticResource BoolToVisibility}}">
+            <StackPanel>
+                <TextBlock Text="No budget set yet" Style="{StaticResource SubtitleText}" />
+                <TextBlock Style="{StaticResource SecondaryText}" Margin="0,8,0,0"
+                           TextWrapping="Wrap"
+                           Text="Pick a category and say what you mean to spend on it each month. Set a few of the big ones first — a budget covering everything is one nobody keeps." />
+                <Button Style="{StaticResource PrimaryButton}" Content="Set a budget…"
+                        HorizontalAlignment="Left" Margin="0,16,0,0"
+                        Command="{Binding EditCommand}" />
+            </StackPanel>
+        </Border>
+
+        <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto"
+                      Visibility="{Binding IsEmpty, Converter={StaticResource NotBoolToVisibility}}">
+            <StackPanel>
+                <Border Style="{StaticResource CardBorder}" Margin="0,0,0,16"
+                        Visibility="{Binding Spending.Count, Converter={StaticResource CountToVisibility}}">
+                    <StackPanel>
+                        <TextBlock Text="Spending" Style="{StaticResource SubtitleText}" Margin="0,0,0,10" />
+
+                        <!-- Selection only pushes outwards: bound two-way, the income list
+                             below would coerce the page's selection to null whenever it held
+                             a spending row. -->
+                        <ListBox ItemsSource="{Binding Spending}"
+                                 SelectedItem="{Binding Selected, Mode=OneWayToSource}"
+                                 ItemTemplate="{StaticResource BudgetRowTemplate}"
+                                 ItemContainerStyle="{StaticResource BudgetRowContainer}"
+                                 BorderThickness="0"
+                                 Background="Transparent"
+                                 HorizontalContentAlignment="Stretch"
+                                 ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                            <ListBox.InputBindings>
+                                <MouseBinding MouseAction="LeftDoubleClick"
+                                              Command="{Binding EditCommand}"
+                                              CommandParameter="{Binding SelectedItem,
+                                                        RelativeSource={RelativeSource AncestorType=ListBox}}" />
+                            </ListBox.InputBindings>
+                            <ListBox.ContextMenu>
+                                <ContextMenu>
+                                    <MenuItem Header="Change this budget…"
+                                              Command="{Binding PlacementTarget.DataContext.EditCommand,
+                                                        RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                                              CommandParameter="{Binding PlacementTarget.SelectedItem,
+                                                        RelativeSource={RelativeSource AncestorType=ContextMenu}}" />
+                                    <MenuItem Header="Remove this budget"
+                                              Command="{Binding PlacementTarget.DataContext.ClearCommand,
+                                                        RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                                              CommandParameter="{Binding PlacementTarget.SelectedItem,
+                                                        RelativeSource={RelativeSource AncestorType=ContextMenu}}" />
+                                </ContextMenu>
+                            </ListBox.ContextMenu>
+                        </ListBox>
+                    </StackPanel>
+                </Border>
+
+                <Border Style="{StaticResource CardBorder}" Margin="0,0,0,16"
+                        Visibility="{Binding Income.Count, Converter={StaticResource CountToVisibility}}">
+                    <StackPanel>
+                        <TextBlock Text="Income" Style="{StaticResource SubtitleText}" Margin="0,0,0,4" />
+                        <TextBlock Style="{StaticResource SecondaryText}" Margin="0,0,0,10"
+                                   Text="Here a full bar is good news: it means the money you expected has arrived." />
+
+                        <ListBox ItemsSource="{Binding Income}"
+                                 SelectedItem="{Binding Selected, Mode=OneWayToSource}"
+                                 ItemTemplate="{StaticResource BudgetRowTemplate}"
+                                 ItemContainerStyle="{StaticResource BudgetRowContainer}"
+                                 BorderThickness="0"
+                                 Background="Transparent"
+                                 HorizontalContentAlignment="Stretch"
+                                 ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                            <ListBox.InputBindings>
+                                <MouseBinding MouseAction="LeftDoubleClick"
+                                              Command="{Binding EditCommand}"
+                                              CommandParameter="{Binding SelectedItem,
+                                                        RelativeSource={RelativeSource AncestorType=ListBox}}" />
+                            </ListBox.InputBindings>
+                            <ListBox.ContextMenu>
+                                <ContextMenu>
+                                    <MenuItem Header="Change this budget…"
+                                              Command="{Binding PlacementTarget.DataContext.EditCommand,
+                                                        RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                                              CommandParameter="{Binding PlacementTarget.SelectedItem,
+                                                        RelativeSource={RelativeSource AncestorType=ContextMenu}}" />
+                                    <MenuItem Header="Remove this budget"
+                                              Command="{Binding PlacementTarget.DataContext.ClearCommand,
+                                                        RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                                              CommandParameter="{Binding PlacementTarget.SelectedItem,
+                                                        RelativeSource={RelativeSource AncestorType=ContextMenu}}" />
+                                </ContextMenu>
+                            </ListBox.ContextMenu>
+                        </ListBox>
+                    </StackPanel>
+                </Border>
+            </StackPanel>
+        </ScrollViewer>
+    </Grid>
+</UserControl>

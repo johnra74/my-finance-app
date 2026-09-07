@@ -1,0 +1,58 @@
+# Build output
+bin/
+obj/
+[Dd]ebug/
+[Rr]elease/
+artifacts/
+*.user
+*.suo
+
+# Rider / VS / VS Code
+.vs/
+.idea/
+.vscode/
+
+# Test output
+TestResults/
+*.trx
+coverage*.xml
+coverage*.json
+
+# Local app data — never commit real books or bank downloads
+*.mfdb
+*.mfmeta
+# A backup is the whole book. Encrypted, but still nobody's business but the owner's.
+*.mfbak
+Backups/
+*.mny
+*.mbf
+*.mbf.*
+*.ofx
+*.qfx
+*.qbo
+*.qif
+# Only files that have been through the redactor are ever committable. A raw download
+# carries the full account number, the routing number and every merchant visited, and a
+# routine "git add -A" would put that in history permanently.
+!tests/fixtures/ofx/redacted/**/*.ofx
+!tests/fixtures/ofx/redacted/**/*.qfx
+!tests/fixtures/ofx/redacted/**/*.qbo
+!tests/fixtures/qif/redacted/**/*.qif
+
+# Model weights are a build input, fetched by tools/fetch-model.sh and verified against a
+# pinned hash. 23 MB of binary has no business in source history.
+*.onnx
+
+# Documentation build output and its virtual environment. The screenshots under
+# money-screens/ are of a real book, so they stay on the machine that made them.
+docs/_build/
+docs/design/money-screens
+.venv-docs/
+venv-docs/
+
+# The documentation, packed for embedding. Build output -- `build docs` makes it.
+src/MyFinance.App/Assets/help.zip
+
+.claude/.continue.sh
+
+site

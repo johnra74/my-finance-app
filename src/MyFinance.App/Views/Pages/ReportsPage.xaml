@@ -1,0 +1,561 @@
+<UserControl x:Class="MyFinance.App.Views.Pages.ReportsPage"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:conv="clr-namespace:MyFinance.App.Converters">
+
+    <UserControl.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVisibility" />
+        <conv:InverseBooleanToVisibilityConverter x:Key="NotBoolToVisibility" />
+        <conv:MoneySignBrushConverter x:Key="MoneyBrush" />
+    </UserControl.Resources>
+
+    <UserControl.InputBindings>
+        <KeyBinding Key="F5" Command="{Binding RefreshCommand}" />
+        <KeyBinding Key="Escape" Command="{Binding CloseDetailCommand}" />
+    </UserControl.InputBindings>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <!-- Every filter in one row above the charts, so changing the question never means
+             hunting for the control that asks it. -->
+        <Grid Grid.Row="0" Margin="0,0,0,12">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="270" />
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+
+            <ComboBox Grid.Column="0"
+                      ItemsSource="{Binding Reports}"
+                      DisplayMemberPath="Text"
+                      SelectedItem="{Binding SelectedReport}"
+                      ToolTip="Which report to run" />
+
+            <ComboBox Grid.Column="1" Width="160" Margin="8,0,0,0"
+                      ItemsSource="{Binding Ranges}"
+                      DisplayMemberPath="Text"
+                      SelectedItem="{Binding SelectedRange}"
+                      ToolTip="The period it covers" />
+
+            <ComboBox Grid.Column="2" Width="190" Margin="8,0,0,0"
+                      ItemsSource="{Binding Accounts}"
+                      DisplayMemberPath="Name"
+                      SelectedItem="{Binding SelectedAccount}"
+                      ToolTip="One account, or leave empty for all of them" />
+
+            <Button Grid.Column="3" Margin="12,0,0,0"
+                    HorizontalAlignment="Left"
+                    Style="{StaticResource SecondaryButton}"
+                    Content="Print…"
+                    ToolTip="Print this report — the chart and the table together"
+                    Command="{Binding PrintReportCommand}" />
+
+            <CheckBox Grid.Column="4" VerticalAlignment="Center"
+                      Content="Roll subcategories up"
+                      IsChecked="{Binding RollUpToParent}"
+                      ToolTip="Report &quot;Bills&quot; as one line rather than each of its subcategories" />
+        </Grid>
+
+        <!-- Percentages computed over a pile of uncategorized spending are quietly wrong, so
+             the report says so rather than letting the reader draw a conclusion from them. -->
+        <Border Grid.Row="1" Margin="0,0,0,12" Padding="14,10" CornerRadius="6"
+                Background="{StaticResource SurfaceAltBrush}"
+                BorderBrush="{StaticResource WarningBrush}"
+                BorderThickness="1"
+                Visibility="{Binding HasUncategorized, Converter={StaticResource BoolToVisibility}}">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+
+                <TextBlock Grid.Column="0" VerticalAlignment="Center"
+                           TextWrapping="Wrap"
+                           Style="{StaticResource BodyText}"
+                           Text="{Binding UncategorizedWarning}" />
+
+                <Button Grid.Column="1" Margin="12,0,0,0"
+                        Style="{StaticResource LinkButton}"
+                        Content="Show them"
+                        Command="{Binding FixUncategorizedCommand}" />
+            </Grid>
+        </Border>
+
+        <Border Grid.Row="2" Style="{StaticResource CardBorder}" VerticalAlignment="Top"
+                Visibility="{Binding IsEmpty, Converter={StaticResource BoolToVisibility}}">
+            <StackPanel>
+                <TextBlock Text="Nothing to report" Style="{StaticResource SubtitleText}" />
+                <TextBlock Style="{StaticResource SecondaryText}" Margin="0,8,0,0"
+                           TextWrapping="Wrap"
+                           Text="No transactions in this period match the filters above. Try a wider date range, or clear the account filter." />
+            </StackPanel>
+        </Border>
+
+        <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto"
+                      Visibility="{Binding IsEmpty, Converter={StaticResource NotBoolToVisibility}}">
+            <StackPanel>
+                <TextBlock Style="{StaticResource SecondaryText}" Margin="0,0,0,10"
+                           Text="{Binding RangeText}" />
+
+                <!-- Magnitude: one hue for every bar, sorted longest first, the tail folded
+                     into a single honest "Other" rather than truncated away. -->
+                <Border Style="{StaticResource CardBorder}" Margin="0,0,0,16"
+                        Visibility="{Binding ShowsBars, Converter={StaticResource BoolToVisibility}}">
+                    <StackPanel>
+                        <Grid Margin="0,0,0,12">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+
+                            <TextBlock Grid.Column="0" Style="{StaticResource SubtitleText}"
+                                       Text="{Binding SelectedReport.Text}" />
+
+                            <TextBlock Grid.Column="1"
+                                       FontFamily="{StaticResource NumericFontFamily}"
+                                       FontSize="{StaticResource FontSizeSubtitle}"
+                                       FontWeight="SemiBold"
+                                       Foreground="{StaticResource TextPrimaryBrush}"
+                                       Text="{Binding TotalText}" />
+                        </Grid>
+
+                        <ItemsControl ItemsSource="{Binding Bars}"
+                                      ItemTemplate="{StaticResource HorizontalBarTemplate}" />
+                    </StackPanel>
+                </Border>
+
+                <!-- Income against spending. Both series share one scale: a second y-axis
+                     would invent a relationship the figures do not have. -->
+                <Border Style="{StaticResource CardBorder}" Margin="0,0,0,16"
+                        Visibility="{Binding ShowsColumns, Converter={StaticResource BoolToVisibility}}">
+                    <StackPanel>
+                        <TextBlock Style="{StaticResource SubtitleText}" Margin="0,0,0,6"
+                                   Text="Income and spending over time" />
+
+                        <!-- Two series always carry a legend, so identity never rests on
+                             colour alone. -->
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,12">
+                            <Rectangle Width="10" Height="10" RadiusX="2" RadiusY="2"
+                                       Fill="{StaticResource ChartSeries1Brush}"
+                                       VerticalAlignment="Center" />
+                            <TextBlock Text="Money in" Margin="6,0,18,0"
+                                       Style="{StaticResource ChartAxisText}"
+                                       VerticalAlignment="Center" />
+
+                            <Rectangle Width="10" Height="10" RadiusX="2" RadiusY="2"
+                                       Fill="{StaticResource ChartSeries2Brush}"
+                                       VerticalAlignment="Center" />
+                            <TextBlock Text="Money out" Margin="6,0,0,0"
+                                       Style="{StaticResource ChartAxisText}"
+                                       VerticalAlignment="Center" />
+                        </StackPanel>
+
+                        <ItemsControl ItemsSource="{Binding Columns}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Grid Margin="0,4">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="90" />
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+
+                                        <TextBlock Grid.Column="0"
+                                                   Style="{StaticResource ChartLabelText}"
+                                                   Margin="0,0,10,0"
+                                                   Text="{Binding Label}" />
+
+                                        <Grid Grid.Column="1" x:Name="Plot">
+                                            <StackPanel>
+                                                <!-- A 2px gap between the two fills, so the
+                                                     pair never reads as one long bar. -->
+                                                <Rectangle Height="12" HorizontalAlignment="Left"
+                                                           RadiusX="4" RadiusY="4"
+                                                           Margin="0,0,0,2"
+                                                           Fill="{StaticResource ChartSeries1Brush}"
+                                                           ToolTip="{Binding IncomeText}">
+                                                    <Rectangle.Width>
+                                                        <MultiBinding Converter="{StaticResource FractionToWidth}">
+                                                            <Binding Path="IncomeFraction" />
+                                                            <Binding Path="ActualWidth" ElementName="Plot" />
+                                                        </MultiBinding>
+                                                    </Rectangle.Width>
+                                                </Rectangle>
+
+                                                <Rectangle Height="12" HorizontalAlignment="Left"
+                                                           RadiusX="4" RadiusY="4"
+                                                           Fill="{StaticResource ChartSeries2Brush}"
+                                                           ToolTip="{Binding SpendingText}">
+                                                    <Rectangle.Width>
+                                                        <MultiBinding Converter="{StaticResource FractionToWidth}">
+                                                            <Binding Path="SpendingFraction" />
+                                                            <Binding Path="ActualWidth" ElementName="Plot" />
+                                                        </MultiBinding>
+                                                    </Rectangle.Width>
+                                                </Rectangle>
+                                            </StackPanel>
+                                        </Grid>
+
+                                        <TextBlock Grid.Column="2" Margin="14,0,0,0"
+                                                   MinWidth="110" TextAlignment="Right"
+                                                   VerticalAlignment="Center"
+                                                   Style="{StaticResource ChartValueText}"
+                                                   Text="{Binding NetText}"
+                                                   ToolTip="What was left over that period"
+                                                   Foreground="{Binding Net, Converter={StaticResource MoneyBrush}}" />
+                                    </Grid>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+
+                        <Border BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,1,0,0"
+                                Margin="0,14,0,0" Padding="0,12,0,0">
+                            <DataGrid Style="{StaticResource DataGridBase}"
+                                      ItemsSource="{Binding Columns}"
+                                      MaxHeight="300">
+                                <DataGrid.Columns>
+                                    <DataGridTextColumn Header="Period" Width="*"
+                                                        Binding="{Binding Label}"
+                                                        ElementStyle="{StaticResource GridCellText}" />
+                                    <DataGridTextColumn Header="Money in" Width="140"
+                                                        Binding="{Binding IncomeText}"
+                                                        ElementStyle="{StaticResource GridAmountText}" />
+                                    <DataGridTextColumn Header="Money out" Width="140"
+                                                        Binding="{Binding SpendingText}"
+                                                        ElementStyle="{StaticResource GridAmountText}" />
+                                    <DataGridTextColumn Header="Left over" Width="140"
+                                                        Binding="{Binding NetText}"
+                                                        ElementStyle="{StaticResource GridAmountText}" />
+                                </DataGrid.Columns>
+                            </DataGrid>
+                        </Border>
+                    </StackPanel>
+                </Border>
+
+                <!-- Net worth. One series, so the title names it and no legend box is needed. -->
+                <Border Style="{StaticResource CardBorder}" Margin="0,0,0,16"
+                        Visibility="{Binding ShowsLine, Converter={StaticResource BoolToVisibility}}">
+                    <StackPanel>
+                        <Grid Margin="0,0,0,12">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+
+                            <TextBlock Grid.Column="0" Style="{StaticResource SubtitleText}"
+                                       Text="Net worth over time" />
+
+                            <TextBlock Grid.Column="1"
+                                       FontFamily="{StaticResource NumericFontFamily}"
+                                       FontSize="{StaticResource FontSizeSubtitle}"
+                                       FontWeight="SemiBold"
+                                       Text="{Binding TotalText}"
+                                       ToolTip="Where it stands at the end of the period"
+                                       Foreground="{Binding Total, Converter={StaticResource MoneyBrush}}" />
+                        </Grid>
+
+                        <ScrollViewer HorizontalScrollBarVisibility="Auto"
+                                      VerticalScrollBarVisibility="Disabled">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                </Grid.RowDefinitions>
+
+                                <!-- Axis figures, in ink rather than in the series colour. -->
+                                <ItemsControl Grid.Row="0" Grid.Column="0"
+                                              Width="88" Margin="0,0,8,0"
+                                              Height="{Binding Line.Height}"
+                                              ItemsSource="{Binding Gridlines}">
+                                    <ItemsControl.ItemsPanel>
+                                        <ItemsPanelTemplate>
+                                            <Canvas />
+                                        </ItemsPanelTemplate>
+                                    </ItemsControl.ItemsPanel>
+                                    <ItemsControl.ItemContainerStyle>
+                                        <Style TargetType="ContentPresenter">
+                                            <Setter Property="Canvas.Top" Value="{Binding Y}" />
+                                        </Style>
+                                    </ItemsControl.ItemContainerStyle>
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <TextBlock Width="88" Margin="0,-8,0,0"
+                                                       TextAlignment="Right"
+                                                       Style="{StaticResource ChartAxisText}"
+                                                       Text="{Binding Label}" />
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+
+                                <Grid Grid.Row="0" Grid.Column="1"
+                                      Width="{Binding Line.Width}"
+                                      Height="{Binding Line.Height}">
+                                    <!-- Gridlines sit behind the data and stay recessive. -->
+                                    <ItemsControl ItemsSource="{Binding Gridlines}">
+                                        <ItemsControl.ItemsPanel>
+                                            <ItemsPanelTemplate>
+                                                <Canvas />
+                                            </ItemsPanelTemplate>
+                                        </ItemsControl.ItemsPanel>
+                                        <ItemsControl.ItemContainerStyle>
+                                            <Style TargetType="ContentPresenter">
+                                                <Setter Property="Canvas.Top" Value="{Binding Y}" />
+                                                <Setter Property="Canvas.Left" Value="0" />
+                                            </Style>
+                                        </ItemsControl.ItemContainerStyle>
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate>
+                                                <Rectangle Style="{StaticResource ChartGridLine}"
+                                                           Width="{Binding Width}" />
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+
+                                    <Polyline Points="{Binding Line.PolylinePoints}"
+                                              Stroke="{StaticResource ChartSeries1Brush}"
+                                              StrokeThickness="2"
+                                              StrokeLineJoin="Round" />
+
+                                    <ItemsControl ItemsSource="{Binding Line.Points}">
+                                        <ItemsControl.ItemsPanel>
+                                            <ItemsPanelTemplate>
+                                                <Canvas />
+                                            </ItemsPanelTemplate>
+                                        </ItemsControl.ItemsPanel>
+                                        <ItemsControl.ItemContainerStyle>
+                                            <Style TargetType="ContentPresenter">
+                                                <Setter Property="Canvas.Left" Value="{Binding X}" />
+                                                <Setter Property="Canvas.Top" Value="{Binding Y}" />
+                                            </Style>
+                                        </ItemsControl.ItemContainerStyle>
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate>
+                                                <!-- A 2px surface ring, so points that overlap
+                                                     the line stay countable. -->
+                                                <Ellipse Width="9" Height="9"
+                                                         Margin="-4.5,-4.5,0,0"
+                                                         Fill="{StaticResource ChartSeries1Brush}"
+                                                         Stroke="{StaticResource SurfaceBrush}"
+                                                         StrokeThickness="2"
+                                                         ToolTip="{Binding ValueText}" />
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                </Grid>
+
+                                <ItemsControl Grid.Row="1" Grid.Column="1"
+                                              Margin="0,6,0,0"
+                                              Height="18"
+                                              Width="{Binding Line.Width}"
+                                              ItemsSource="{Binding Line.Points}"
+                                              Visibility="{Binding ShowsLineLabels, Converter={StaticResource BoolToVisibility}}">
+                                    <ItemsControl.ItemsPanel>
+                                        <ItemsPanelTemplate>
+                                            <Canvas />
+                                        </ItemsPanelTemplate>
+                                    </ItemsControl.ItemsPanel>
+                                    <ItemsControl.ItemContainerStyle>
+                                        <Style TargetType="ContentPresenter">
+                                            <Setter Property="Canvas.Left" Value="{Binding X}" />
+                                        </Style>
+                                    </ItemsControl.ItemContainerStyle>
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <TextBlock Width="64" Margin="-32,0,0,0"
+                                                       TextAlignment="Center"
+                                                       Style="{StaticResource ChartAxisText}"
+                                                       Text="{Binding Label}" />
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </Grid>
+                        </ScrollViewer>
+
+                        <TextBlock Style="{StaticResource ChartAxisText}" Margin="0,10,0,0"
+                                   Text="Hover a point for its figure. The scale always includes zero, so a small change cannot be drawn as a cliff." />
+                    </StackPanel>
+                </Border>
+
+                <!-- The figures. Always present beside the chart: the chart shows the shape,
+                     the table gives the numbers, and neither on its own is the report. -->
+                <Border Style="{StaticResource CardBorder}" Margin="0,0,0,16"
+                        Visibility="{Binding ShowsBars, Converter={StaticResource BoolToVisibility}}">
+                    <StackPanel>
+                        <TextBlock Text="The figures" Style="{StaticResource SubtitleText}"
+                                   Margin="0,0,0,10" />
+
+                        <DataGrid Style="{StaticResource DataGridBase}"
+                                  ItemsSource="{Binding Rows}"
+                                  SelectedItem="{Binding SelectedRow}"
+                                  MaxHeight="360">
+                            <!-- The command takes no parameter: an input binding sits outside
+                                 the visual tree, so it reads the selection off the page view
+                                 model rather than walking back up to the grid. -->
+                            <DataGrid.InputBindings>
+                                <MouseBinding MouseAction="LeftDoubleClick"
+                                              Command="{Binding DrillDownCommand}" />
+                            </DataGrid.InputBindings>
+
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="Name" Width="*"
+                                                    Binding="{Binding Label}"
+                                                    ElementStyle="{StaticResource GridCellText}" />
+                                <DataGridTextColumn Header="Transactions" Width="120"
+                                                    Binding="{Binding Count}"
+                                                    ElementStyle="{StaticResource GridAmountText}" />
+                                <DataGridTextColumn Header="Share" Width="90"
+                                                    Binding="{Binding ShareText}"
+                                                    ElementStyle="{StaticResource GridAmountText}" />
+                                <DataGridTextColumn Header="Amount" Width="140"
+                                                    Binding="{Binding AmountText}"
+                                                    ElementStyle="{StaticResource GridAmountText}" />
+                            </DataGrid.Columns>
+                        </DataGrid>
+
+                        <TextBlock Style="{StaticResource ChartAxisText}" Margin="0,8,0,0"
+                                   Text="Double-click a row to see the transactions behind it." />
+                    </StackPanel>
+                </Border>
+
+                <Border Style="{StaticResource CardBorder}" Margin="0,0,0,16"
+                        Visibility="{Binding ShowsBalances, Converter={StaticResource BoolToVisibility}}">
+                    <DataGrid Style="{StaticResource DataGridBase}" ItemsSource="{Binding Balances}"
+                              MaxHeight="480">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="Account" Width="*"
+                                                Binding="{Binding Name}"
+                                                ElementStyle="{StaticResource GridCellText}" />
+                            <DataGridTextColumn Header="Group" Width="150"
+                                                Binding="{Binding Group}"
+                                                ElementStyle="{StaticResource GridCellText}" />
+                            <DataGridTemplateColumn Header="Balance" Width="160">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Style="{StaticResource GridAmountText}"
+                                                   Text="{Binding Balance, StringFormat={}{0:A}}"
+                                                   Foreground="{Binding Balance, Converter={StaticResource MoneyBrush}}" />
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </Border>
+
+                <Border Style="{StaticResource CardBorder}" Margin="0,0,0,16"
+                        Visibility="{Binding ShowsComparison, Converter={StaticResource BoolToVisibility}}">
+                    <StackPanel>
+                        <TextBlock Style="{StaticResource SecondaryText}" Margin="0,0,0,10">
+                            <Run Text="{Binding FirstPeriodLabel, Mode=OneWay}" />
+                            <Run Text=" compared with " />
+                            <Run Text="{Binding SecondPeriodLabel, Mode=OneWay}" />
+                        </TextBlock>
+
+                        <DataGrid Style="{StaticResource DataGridBase}" ItemsSource="{Binding Comparison}"
+                                  MaxHeight="480">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="Category" Width="*"
+                                                    Binding="{Binding Label}"
+                                                    ElementStyle="{StaticResource GridCellText}" />
+                                <DataGridTextColumn Header="Before" Width="130"
+                                                    Binding="{Binding First, StringFormat={}{0:C}}"
+                                                    ElementStyle="{StaticResource GridAmountText}" />
+                                <DataGridTextColumn Header="After" Width="130"
+                                                    Binding="{Binding Second, StringFormat={}{0:C}}"
+                                                    ElementStyle="{StaticResource GridAmountText}" />
+                                <DataGridTemplateColumn Header="Change" Width="130">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <TextBlock Style="{StaticResource GridAmountText}"
+                                                       Text="{Binding Change, StringFormat={}{0:A}}"
+                                                       Foreground="{Binding Change, Converter={StaticResource MoneyBrush}}" />
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
+                                <DataGridTextColumn Header="Change" Width="100"
+                                                    Binding="{Binding ChangeShareText}"
+                                                    ElementStyle="{StaticResource GridAmountText}" />
+                            </DataGrid.Columns>
+                        </DataGrid>
+                    </StackPanel>
+                </Border>
+
+                <Border Style="{StaticResource CardBorder}" Margin="0,0,0,16"
+                        Visibility="{Binding ShowsDetail, Converter={StaticResource BoolToVisibility}}">
+                    <StackPanel>
+                        <Grid Margin="0,0,0,10">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+
+                            <TextBlock Grid.Column="0" Style="{StaticResource SubtitleText}"
+                                       Text="{Binding DetailCaption}" />
+
+                            <StackPanel Grid.Column="1" Orientation="Horizontal">
+                                <Button Style="{StaticResource LinkButton}"
+                                        Content="Open in the register"
+                                        Command="{Binding OpenInRegisterCommand}" />
+                                <Button Style="{StaticResource LinkButton}" Margin="16,0,0,0"
+                                        Content="Close" Command="{Binding CloseDetailCommand}" />
+                            </StackPanel>
+                        </Grid>
+
+                        <DataGrid Style="{StaticResource DataGridBase}"
+                                  ItemsSource="{Binding Detail}"
+                                  SelectedItem="{Binding SelectedDetail}"
+                                  MaxHeight="420">
+                            <DataGrid.InputBindings>
+                                <MouseBinding MouseAction="LeftDoubleClick"
+                                              Command="{Binding OpenInRegisterCommand}" />
+                            </DataGrid.InputBindings>
+
+                            <DataGrid.ContextMenu>
+                                <ContextMenu>
+                                    <MenuItem Header="Open in the register"
+                                              Command="{Binding PlacementTarget.DataContext.OpenInRegisterCommand,
+                                                        RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                                              CommandParameter="{Binding PlacementTarget.SelectedItem,
+                                                        RelativeSource={RelativeSource AncestorType=ContextMenu}}" />
+                                </ContextMenu>
+                            </DataGrid.ContextMenu>
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="Date" Width="110"
+                                                    Binding="{Binding DateText}"
+                                                    ElementStyle="{StaticResource GridCellText}" />
+                                <DataGridTextColumn Header="Payee" Width="*"
+                                                    Binding="{Binding PayeeName}"
+                                                    ElementStyle="{StaticResource GridCellText}" />
+                                <DataGridTextColumn Header="Category" Width="1.2*"
+                                                    Binding="{Binding CategoryPath}"
+                                                    ElementStyle="{StaticResource GridCellText}" />
+                                <DataGridTextColumn Header="Account" Width="150"
+                                                    Binding="{Binding AccountName}"
+                                                    ElementStyle="{StaticResource GridCellText}" />
+                                <DataGridTemplateColumn Header="Amount" Width="140">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <TextBlock Style="{StaticResource GridAmountText}"
+                                                       Text="{Binding AmountText}"
+                                                       Foreground="{Binding Amount, Converter={StaticResource MoneyBrush}}" />
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
+                            </DataGrid.Columns>
+                        </DataGrid>
+                    </StackPanel>
+                </Border>
+            </StackPanel>
+        </ScrollViewer>
+    </Grid>
+</UserControl>

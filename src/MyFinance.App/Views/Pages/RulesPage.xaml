@@ -1,0 +1,114 @@
+<UserControl x:Class="MyFinance.App.Views.Pages.RulesPage"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:conv="clr-namespace:MyFinance.App.Converters">
+
+    <UserControl.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVisibility" />
+        <conv:InverseBooleanToVisibilityConverter x:Key="NotBoolToVisibility" />
+    </UserControl.Resources>
+
+    <UserControl.InputBindings>
+        <KeyBinding Modifiers="Control" Key="N" Command="{Binding NewCommand}" />
+        <KeyBinding Key="F5" Command="{Binding RefreshCommand}" />
+        <KeyBinding Key="Enter" Command="{Binding EditCommand}" CommandParameter="{Binding Selected}" />
+    </UserControl.InputBindings>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <TextBlock Grid.Row="0" Style="{StaticResource SecondaryText}" Margin="0,0,0,12"
+                   Text="Rules run on import, before anything is guessed. The first rule that matches a transaction decides it, so order matters — move a specific rule above a general one to make it win." />
+
+        <Grid Grid.Row="1" Margin="0,0,0,12">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+
+            <Button Grid.Column="0" Style="{StaticResource PrimaryButton}"
+                    Content="New rule" Command="{Binding NewCommand}" />
+
+            <Button Grid.Column="1" Margin="8,0,0,0" Style="{StaticResource SecondaryButton}"
+                    Content="Edit" Command="{Binding EditCommand}"
+                    CommandParameter="{Binding Selected}" />
+
+            <Button Grid.Column="2" Margin="8,0,0,0" Style="{StaticResource SecondaryButton}"
+                    Content="Enable or disable" Command="{Binding ToggleEnabledCommand}"
+                    CommandParameter="{Binding Selected}" />
+
+            <Button Grid.Column="3" Margin="8,0,0,0" Style="{StaticResource SecondaryButton}"
+                    Content="Delete" Command="{Binding DeleteCommand}"
+                    CommandParameter="{Binding Selected}" />
+
+            <Button Grid.Column="5" Style="{StaticResource SecondaryButton}"
+                    Content="Move up" ToolTip="Rules are tried in order; the first match wins"
+                    Command="{Binding MoveUpCommand}" />
+
+            <Button Grid.Column="6" Margin="8,0,0,0" Style="{StaticResource SecondaryButton}"
+                    Content="Move down" Command="{Binding MoveDownCommand}" />
+        </Grid>
+
+        <Border Grid.Row="2" Style="{StaticResource CardBorder}" VerticalAlignment="Top"
+                Visibility="{Binding IsEmpty, Converter={StaticResource BoolToVisibility}}">
+            <StackPanel>
+                <TextBlock Text="No rules yet" Style="{StaticResource SubtitleText}" />
+                <TextBlock Style="{StaticResource SecondaryText}" Margin="0,8,0,12"
+                           TextWrapping="Wrap"
+                           Text="A rule files matching transactions automatically — for example, anything whose description contains SHELL goes to Transport : Fuel. Rules are the only part of categorization you write yourself, so they run ahead of everything the application infers." />
+                <Button Style="{StaticResource PrimaryButton}" HorizontalAlignment="Left"
+                        Content="Write your first rule" Command="{Binding NewCommand}" />
+            </StackPanel>
+        </Border>
+
+        <DataGrid Grid.Row="2"
+                  Style="{StaticResource DataGridBase}"
+                  ItemsSource="{Binding Items}"
+                  SelectedItem="{Binding Selected}"
+                  Visibility="{Binding IsEmpty, Converter={StaticResource NotBoolToVisibility}}">
+
+            <DataGrid.InputBindings>
+                <MouseBinding MouseAction="LeftDoubleClick"
+                              Command="{Binding EditCommand}"
+                              CommandParameter="{Binding Selected}" />
+            </DataGrid.InputBindings>
+
+            <DataGrid.Columns>
+                <DataGridTextColumn Header="Rule" Width="180"
+                                    Binding="{Binding Name}"
+                                    ElementStyle="{StaticResource GridCellText}" />
+                <DataGridTextColumn Header="When" Width="2*"
+                                    Binding="{Binding Condition}"
+                                    ElementStyle="{StaticResource GridCellText}" />
+                <DataGridTextColumn Header="Then" Width="2*"
+                                    Binding="{Binding Action}"
+                                    ElementStyle="{StaticResource GridCellText}" />
+                <DataGridTextColumn Header="Applies to" Width="140"
+                                    Binding="{Binding ScopeText}"
+                                    ElementStyle="{StaticResource GridCellText}" />
+                <DataGridTextColumn Header="Used" Width="70"
+                                    Binding="{Binding TimesApplied}"
+                                    ElementStyle="{StaticResource GridAmountText}" />
+            </DataGrid.Columns>
+
+            <DataGrid.RowStyle>
+                <Style TargetType="DataGridRow">
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding IsEnabled}" Value="False">
+                            <Setter Property="Opacity" Value="0.5" />
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </DataGrid.RowStyle>
+        </DataGrid>
+    </Grid>
+</UserControl>

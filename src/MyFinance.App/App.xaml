@@ -1,0 +1,51 @@
+<Application x:Class="MyFinance.App.App"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:pages="clr-namespace:MyFinance.App.ViewModels.Pages"
+             xmlns:views="clr-namespace:MyFinance.App.Views.Pages">
+    <Application.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="Themes/Palette.xaml" />
+                <ResourceDictionary Source="Themes/Controls.xaml" />
+                <ResourceDictionary Source="Themes/Charts.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+
+            <!--
+                View-model-first navigation: the shell binds a ContentControl to the current
+                page view model and WPF picks the view from these templates. Adding a screen
+                in a later phase means registering a view model and adding one template here.
+            -->
+            <DataTemplate DataType="{x:Type pages:HomePageViewModel}">
+                <views:HomePage />
+            </DataTemplate>
+            <DataTemplate DataType="{x:Type pages:AccountListPageViewModel}">
+                <views:AccountListPage />
+            </DataTemplate>
+            <DataTemplate DataType="{x:Type pages:RegisterPageViewModel}">
+                <views:RegisterPage />
+            </DataTemplate>
+            <DataTemplate DataType="{x:Type pages:CategoriesPageViewModel}">
+                <views:CategoriesPage />
+            </DataTemplate>
+            <DataTemplate DataType="{x:Type pages:PayeesPageViewModel}">
+                <views:PayeesPage />
+            </DataTemplate>
+            <DataTemplate DataType="{x:Type pages:RulesPageViewModel}">
+                <views:RulesPage />
+            </DataTemplate>
+            <DataTemplate DataType="{x:Type pages:BillsPageViewModel}">
+                <views:BillsPage />
+            </DataTemplate>
+            <DataTemplate DataType="{x:Type pages:ForecastPageViewModel}">
+                <views:ForecastPage />
+            </DataTemplate>
+            <DataTemplate DataType="{x:Type pages:ReportsPageViewModel}">
+                <views:ReportsPage />
+            </DataTemplate>
+            <DataTemplate DataType="{x:Type pages:BudgetPageViewModel}">
+                <views:BudgetPage />
+            </DataTemplate>
+        </ResourceDictionary>
+    </Application.Resources>
+</Application>

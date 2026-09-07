@@ -1,0 +1,15 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/MyFinance.App/MyFinance.App.csproj" />
+    <Project Path="src/MyFinance.Core/MyFinance.Core.csproj" />
+    <Project Path="src/MyFinance.Data/MyFinance.Data.csproj" />
+    <Project Path="src/MyFinance.Import/MyFinance.Import.csproj" />
+    <Project Path="src/MyFinance.Semantics/MyFinance.Semantics.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/MyFinance.Core.Tests/MyFinance.Core.Tests.csproj" />
+    <Project Path="tests/MyFinance.Data.Tests/MyFinance.Data.Tests.csproj" />
+    <Project Path="tests/MyFinance.Import.Tests/MyFinance.Import.Tests.csproj" />
+    <Project Path="tests/MyFinance.Semantics.Tests/MyFinance.Semantics.Tests.csproj" />
+  </Folder>
+</Solution>

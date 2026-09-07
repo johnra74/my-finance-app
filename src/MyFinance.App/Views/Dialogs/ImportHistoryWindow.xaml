@@ -1,0 +1,84 @@
+<Window x:Class="MyFinance.App.Views.Dialogs.ImportHistoryWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:conv="clr-namespace:MyFinance.App.Converters"
+        Title="{Binding Title}"
+        Width="820" Height="520"
+        MinWidth="640" MinHeight="380"
+        ShowInTaskbar="False"
+        Background="{StaticResource SurfaceBrush}"
+        FontFamily="{StaticResource UiFontFamily}"
+        FontSize="{StaticResource FontSizeBody}">
+
+    <Window.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVisibility" />
+        <conv:InverseBooleanToVisibilityConverter x:Key="NotBoolToVisibility" />
+    </Window.Resources>
+
+    <Grid Margin="20">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <TextBlock Grid.Row="0" Style="{StaticResource SecondaryText}" Margin="0,0,0,12"
+                   Text="Undoing an import removes exactly the transactions it added. Payees and the payee shortcuts it learned are kept, since they may be in use elsewhere." />
+
+        <Border Grid.Row="1" Style="{StaticResource CardBorder}" VerticalAlignment="Top"
+                Visibility="{Binding IsEmpty, Converter={StaticResource BoolToVisibility}}">
+            <TextBlock Style="{StaticResource BodyText}"
+                       Text="Nothing has been imported into this book yet." />
+        </Border>
+
+        <DataGrid Grid.Row="1"
+                  Style="{StaticResource DataGridBase}"
+                  ItemsSource="{Binding Rows}"
+                  SelectedItem="{Binding Selected}"
+                  Visibility="{Binding IsEmpty, Converter={StaticResource NotBoolToVisibility}}">
+            <DataGrid.Columns>
+                <DataGridTextColumn Header="Imported" Width="150"
+                                    Binding="{Binding ImportedText}"
+                                    ElementStyle="{StaticResource GridCellText}" />
+                <DataGridTextColumn Header="File" Width="*"
+                                    Binding="{Binding FileText}"
+                                    ElementStyle="{StaticResource GridCellText}" />
+                <DataGridTextColumn Header="Account" Width="160"
+                                    Binding="{Binding AccountText}"
+                                    ElementStyle="{StaticResource GridCellText}" />
+                <DataGridTextColumn Header="Period" Width="180"
+                                    Binding="{Binding PeriodText}"
+                                    ElementStyle="{StaticResource GridCellText}" />
+                <DataGridTextColumn Header="Result" Width="140"
+                                    Binding="{Binding CountText}"
+                                    ElementStyle="{StaticResource GridCellText}" />
+            </DataGrid.Columns>
+
+            <DataGrid.RowStyle>
+                <Style TargetType="DataGridRow">
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding IsReverted}" Value="True">
+                            <Setter Property="Opacity" Value="0.55" />
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </DataGrid.RowStyle>
+        </DataGrid>
+
+        <StackPanel Grid.Row="2">
+            <TextBlock Style="{StaticResource ErrorText}" Margin="0,12,0,0"
+                       TextWrapping="Wrap"
+                       Text="{Binding ErrorMessage}"
+                       Visibility="{Binding HasError, Converter={StaticResource BoolToVisibility}}" />
+
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,14,0,0">
+                <Button Style="{StaticResource SecondaryButton}" Content="Undo this import"
+                        Command="{Binding RevertCommand}"
+                        CommandParameter="{Binding Selected}" />
+                <Button Style="{StaticResource PrimaryButton}" Content="Close" Margin="8,0,0,0"
+                        IsDefault="True" IsCancel="True"
+                        Command="{Binding DoneCommand}" />
+            </StackPanel>
+        </StackPanel>
+    </Grid>
+</Window>

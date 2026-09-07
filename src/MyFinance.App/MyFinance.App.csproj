@@ -1,0 +1,81 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <RootNamespace>MyFinance.App</RootNamespace>
+    <UseWPF>true</UseWPF>
+    <ApplicationHighDpiMode>PerMonitorV2</ApplicationHighDpiMode>
+
+    <ApplicationIcon>Assets\MyFinance.ico</ApplicationIcon>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+
+    <AssemblyName>MyFinance</AssemblyName>
+    <AssemblyTitle>MyFinance</AssemblyTitle>
+
+    <!-- What Windows shows in the file's properties and in Task Manager. -->
+    <Description>Personal finance for Windows: an encrypted book, a register, bills, budgets and reports.</Description>
+
+    <!-- Published as one file, so satellite resource assemblies would be dead weight. -->
+    <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!--
+      Just the container. Microsoft.Extensions.Hosting was referenced but never used, and it
+      drags the Roslyn MSBuild build host into the published output as two stray folders
+      beside the executable.
+    -->
+    <PackageReference Include="CommunityToolkit.Mvvm" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- The window icon, as well as the executable's. -->
+    <Resource Include="Assets\MyFinance.ico" />
+  </ItemGroup>
+
+  <!--
+    The documentation, built by `build docs` and embedded rather than copied beside the
+    executable: the application ships as a single file, and a docs folder next to it is a
+    folder users move, zip without, or lose. Conditional so a machine without the Sphinx
+    toolchain still builds the whole solution: Help then says the pages are not there,
+    which is the same bargain the embedding model makes.
+  -->
+  <ItemGroup>
+    <EmbeddedResource Include="Assets\help.zip" LogicalName="help.zip" Condition="Exists('Assets\help.zip')" />
+  </ItemGroup>
+
+  <!--
+    The licence and the third-party notices, embedded so they travel with the single file.
+    SQLCipher's BSD-3 terms and the Apache-2.0 terms on SQLitePCLRaw and the embedding model
+    all require the notice to be reproduced in a binary distribution, and a text file beside
+    the executable is one a user moves or zips without. About reads them from here.
+  -->
+  <ItemGroup>
+    <EmbeddedResource Include="..\..\LICENSE" LogicalName="LICENSE" />
+    <EmbeddedResource Include="..\..\NOTICE" LogicalName="NOTICE" />
+  </ItemGroup>
+
+  <!--
+    ONNX Runtime's package ships the C++ import libraries alongside its native DLL. They are
+    for linking against, do nothing at run time, and would otherwise sit beside the executable
+    looking like something a user needs to keep. The DLL itself stays, bundled inside the
+    single file.
+  -->
+  <Target Name="RemoveNativeImportLibraries" AfterTargets="ComputeFilesToPublish">
+    <ItemGroup>
+      <ResolvedFileToPublish
+        Remove="@(ResolvedFileToPublish)"
+        Condition="'%(ResolvedFileToPublish.Extension)' == '.lib'" />
+    </ItemGroup>
+  </Target>
+
+  <ItemGroup>
+    <ProjectReference Include="..\MyFinance.Core\MyFinance.Core.csproj" />
+    <ProjectReference Include="..\MyFinance.Data\MyFinance.Data.csproj" />
+    <ProjectReference Include="..\MyFinance.Import\MyFinance.Import.csproj" />
+    <ProjectReference Include="..\MyFinance.Semantics\MyFinance.Semantics.csproj" />
+  </ItemGroup>
+
+</Project>

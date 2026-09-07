@@ -1,0 +1,315 @@
+<Window x:Class="MyFinance.App.Views.Dialogs.ImportWizardWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:conv="clr-namespace:MyFinance.App.Converters"
+        xmlns:controls="clr-namespace:MyFinance.App.Views.Controls"
+        Title="{Binding Title}"
+        Width="960" Height="700"
+        MinWidth="760" MinHeight="520"
+        ShowInTaskbar="False"
+        Background="{StaticResource SurfaceBrush}"
+        FontFamily="{StaticResource UiFontFamily}"
+        FontSize="{StaticResource FontSizeBody}">
+
+    <Window.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVisibility" />
+        <conv:BalancedBrushConverter x:Key="BalancedBrush" />
+        <conv:MoneySignBrushConverter x:Key="MoneyBrush" />
+        <conv:InverseBooleanConverter x:Key="Not" />
+        <conv:InverseBooleanToVisibilityConverter x:Key="NotBoolToVisibility" />
+    </Window.Resources>
+
+    <Grid>
+    <Grid Margin="20">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <!-- Step 1: choose a file -->
+        <StackPanel Grid.Row="0" VerticalAlignment="Top"
+                    Visibility="{Binding IsChoosingFile, Converter={StaticResource BoolToVisibility}}">
+            <TextBlock Text="Choose a downloaded statement" Style="{StaticResource SubtitleText}" />
+            <TextBlock Style="{StaticResource SecondaryText}" Margin="0,8,0,16"
+                       Text="Download a statement from your bank's website in OFX, QFX, QBO or QIF format. Nothing is written to your book until you have reviewed what it contains." />
+
+            <Button Style="{StaticResource PrimaryButton}" HorizontalAlignment="Left"
+                    Content="Choose a file…" Command="{Binding ChooseFileCommand}" />
+
+            <TextBlock Style="{StaticResource BodyText}" Margin="0,16,0,0"
+                       Text="{Binding FileName}" />
+        </StackPanel>
+
+        <!-- Step 2: which account -->
+        <StackPanel Grid.Row="0" VerticalAlignment="Top"
+                    Visibility="{Binding IsChoosingAccount, Converter={StaticResource BoolToVisibility}}">
+            <TextBlock Text="Which account is this?" Style="{StaticResource SubtitleText}" />
+
+            <Border Style="{StaticResource CardBorder}" Margin="0,12,0,16">
+                <StackPanel>
+                    <TextBlock Text="{Binding FileName}" FontWeight="SemiBold" />
+                    <TextBlock Style="{StaticResource SecondaryText}" Margin="0,4,0,0"
+                               Text="{Binding StatementSummary}" />
+                </StackPanel>
+            </Border>
+
+            <TextBlock Text="Account" Style="{StaticResource FieldLabel}" />
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+
+                <ComboBox Grid.Column="0"
+                          ItemsSource="{Binding Accounts}"
+                          DisplayMemberPath="Name"
+                          SelectedItem="{Binding SelectedAccount}" />
+
+                <Button Grid.Column="1" Margin="8,0,0,0" Style="{StaticResource SecondaryButton}"
+                        Content="Create a new account…"
+                        Command="{Binding CreateAccountCommand}" />
+            </Grid>
+
+            <TextBlock Style="{StaticResource SecondaryText}"
+                       FontSize="{StaticResource FontSizeSmall}"
+                       Margin="0,6,0,0"
+                       TextWrapping="Wrap"
+                       Text="The account is remembered, so the next statement from this bank will select it for you. Only the last digits of the account number are ever stored." />
+
+            <ItemsControl ItemsSource="{Binding Diagnostics}" Margin="0,16,0,0"
+                          Visibility="{Binding HasDiagnostics, Converter={StaticResource BoolToVisibility}}">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <TextBlock Text="{Binding}" TextWrapping="Wrap"
+                                   Foreground="{StaticResource WarningBrush}"
+                                   Margin="0,0,0,4" />
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </StackPanel>
+
+        <!-- Step 3: review -->
+        <Grid Grid.Row="0"
+              Visibility="{Binding IsReviewing, Converter={StaticResource BoolToVisibility}}">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+
+            <StackPanel Grid.Row="0" Margin="0,0,0,10">
+                <!-- The sign banner. Getting this wrong is the one import failure that
+                     quietly corrupts a book rather than announcing itself. -->
+                <Border Background="{StaticResource SurfaceAltBrush}"
+                        BorderBrush="{StaticResource BorderBrush}"
+                        BorderThickness="1" CornerRadius="6" Padding="12"
+                        Margin="0,0,0,10"
+                        Visibility="{Binding ShowSignWarning, Converter={StaticResource BoolToVisibility}}">
+                    <StackPanel>
+                        <TextBlock Text="{Binding SignMessage}" TextWrapping="Wrap"
+                                   Style="{StaticResource BodyText}" />
+                        <CheckBox Margin="0,8,0,0"
+                                  Content="Reverse the sign of every amount in this file"
+                                  IsChecked="{Binding ReverseSigns}" />
+                    </StackPanel>
+                </Border>
+
+                <Border Background="{StaticResource SurfaceAltBrush}"
+                        BorderBrush="{StaticResource BorderBrush}"
+                        BorderThickness="1" CornerRadius="6" Padding="12"
+                        Margin="0,0,0,10"
+                        Visibility="{Binding HasMissingCategories, Converter={StaticResource BoolToVisibility}}">
+                    <StackPanel>
+                        <TextBlock Text="{Binding MissingCategoriesMessage}" TextWrapping="Wrap"
+                                   Style="{StaticResource BodyText}" />
+                        <CheckBox Margin="0,8,0,0"
+                                  Content="Create these categories so the file's own filing is kept"
+                                  IsChecked="{Binding CreateMissingCategories}" />
+                    </StackPanel>
+                </Border>
+
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+
+                    <Button Grid.Column="0" Style="{StaticResource LinkButton}"
+                            Content="Select all" Command="{Binding SelectAllCommand}" />
+                    <Button Grid.Column="1" Margin="16,0,0,0" Style="{StaticResource LinkButton}"
+                            Content="Select none" Command="{Binding SelectNoneCommand}" />
+
+                    <TextBlock Grid.Column="2" HorizontalAlignment="Right"
+                               VerticalAlignment="Center"
+                               Style="{StaticResource SecondaryText}"
+                               Text="{Binding CountsMessage}" />
+                </Grid>
+            </StackPanel>
+
+            <DataGrid Grid.Row="1"
+                      Style="{StaticResource DataGridBase}"
+                      ItemsSource="{Binding Rows}"
+                      RowHeight="34">
+                <DataGrid.Columns>
+                    <DataGridTemplateColumn Header="Import" Width="60">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <CheckBox HorizontalAlignment="Center"
+                                          IsChecked="{Binding Include, UpdateSourceTrigger=PropertyChanged}"
+                                          IsEnabled="{Binding CanBeIncluded}" />
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+
+                    <DataGridTextColumn Header="Date" Width="95" IsReadOnly="True"
+                                        Binding="{Binding Date, StringFormat=d}"
+                                        ElementStyle="{StaticResource GridCellText}" />
+
+                    <DataGridTemplateColumn Header="Payee" Width="1.6*">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <TextBox Margin="4,2" BorderThickness="0" Background="Transparent"
+                                         Text="{Binding PayeeName, UpdateSourceTrigger=PropertyChanged}"
+                                         ToolTip="{Binding Descriptor}" />
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+
+                    <DataGridTemplateColumn Header="Category" Width="1.4*">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <!-- Bound to the shared list on the row, not a per-row copy:
+                                     one category tree per row would make this grid crawl. -->
+                                <ComboBox Margin="4,2" BorderThickness="0"
+                                          ItemsSource="{Binding Categories}"
+                                          DisplayMemberPath="FullName"
+                                          SelectedItem="{Binding Category, UpdateSourceTrigger=PropertyChanged}" />
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+
+                    <DataGridTemplateColumn Header="Amount" Width="120">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <TextBlock Style="{StaticResource GridAmountText}"
+                                           Text="{Binding AmountText}"
+                                           Foreground="{Binding Amount, Converter={StaticResource MoneyBrush}}" />
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+
+                    <DataGridTemplateColumn Header="Why" Width="130">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <TextBlock Text="{Binding CategorySource}"
+                                           ToolTip="Where this category came from">
+                                    <TextBlock.Style>
+                                        <Style TargetType="TextBlock" BasedOn="{StaticResource GridCellText}">
+                                            <Style.Triggers>
+                                                <!-- A guess is marked so it is never mistaken
+                                                     for something the user decided. -->
+                                                <DataTrigger Binding="{Binding IsGuess}" Value="True">
+                                                    <Setter Property="Foreground"
+                                                            Value="{StaticResource WarningBrush}" />
+                                                    <Setter Property="FontStyle" Value="Italic" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TextBlock.Style>
+                                </TextBlock>
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+
+                    <DataGridTextColumn Header="Status" Width="130" IsReadOnly="True"
+                                        Binding="{Binding Status}"
+                                        ElementStyle="{StaticResource GridCellText}" />
+                </DataGrid.Columns>
+
+                <DataGrid.RowStyle>
+                    <Style TargetType="DataGridRow">
+                        <Setter Property="ToolTip" Value="{Binding StatusDetail}" />
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding IsDuplicate}" Value="True">
+                                <Setter Property="Opacity" Value="0.6" />
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding IsNewPayee}" Value="True">
+                                <Setter Property="Background" Value="{StaticResource AccentSoftBrush}" />
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </DataGrid.RowStyle>
+            </DataGrid>
+        </Grid>
+
+        <!-- Step 4: done -->
+        <StackPanel Grid.Row="0" VerticalAlignment="Top"
+                    Visibility="{Binding IsDone, Converter={StaticResource BoolToVisibility}}">
+            <TextBlock Text="Import finished" Style="{StaticResource SubtitleText}" />
+            <TextBlock Style="{StaticResource BodyText}" Margin="0,10,0,0"
+                       TextWrapping="Wrap"
+                       Text="{Binding ResultMessage}" />
+            <TextBlock Style="{StaticResource SecondaryText}" Margin="0,12,0,0"
+                       TextWrapping="Wrap"
+                       Text="If anything looks wrong you can undo the whole import from the import history on the account list." />
+        </StackPanel>
+
+        <!-- Live balance check: the real safety net, whatever the sign heuristic decided. -->
+        <Border Grid.Row="1" Background="{StaticResource SurfaceSunkenBrush}"
+                BorderBrush="{StaticResource BorderBrush}" BorderThickness="1"
+                CornerRadius="6" Padding="14,10" Margin="0,12,0,0"
+                Visibility="{Binding IsReviewing, Converter={StaticResource BoolToVisibility}}">
+            <TextBlock Text="{Binding BalanceMessage}"
+                       FontFamily="{StaticResource NumericFontFamily}"
+                       FontWeight="SemiBold"
+                       Foreground="{Binding BalanceAgrees, Converter={StaticResource BalancedBrush}}" />
+        </Border>
+
+        <StackPanel Grid.Row="2">
+            <TextBlock Style="{StaticResource ErrorText}" Margin="0,12,0,0"
+                       TextWrapping="Wrap"
+                       Text="{Binding ErrorMessage}"
+                       Visibility="{Binding HasError, Converter={StaticResource BoolToVisibility}}" />
+
+            <Grid Margin="0,14,0,0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+
+                <Button Grid.Column="0" Style="{StaticResource SecondaryButton}"
+                        Content="Back" Command="{Binding GoBackCommand}"
+                        Visibility="{Binding CanGoBack, Converter={StaticResource BoolToVisibility}}" />
+
+                <StackPanel Grid.Column="2" Orientation="Horizontal">
+                    <Button Style="{StaticResource SecondaryButton}" Content="Cancel"
+                            IsCancel="True" Command="{Binding CancelCommand}"
+                            Visibility="{Binding IsDone, Converter={StaticResource NotBoolToVisibility}}" />
+
+                    <Button Style="{StaticResource PrimaryButton}" Content="Continue" Margin="8,0,0,0"
+                            IsDefault="True"
+                            Command="{Binding ContinueToReviewCommand}"
+                            IsEnabled="{Binding IsBusy, Converter={StaticResource Not}}"
+                            Visibility="{Binding IsChoosingAccount, Converter={StaticResource BoolToVisibility}}" />
+
+                    <Button Style="{StaticResource PrimaryButton}" Content="Import" Margin="8,0,0,0"
+                            IsDefault="True"
+                            Command="{Binding ImportCommand}"
+                            IsEnabled="{Binding IsBusy, Converter={StaticResource Not}}"
+                            Visibility="{Binding IsReviewing, Converter={StaticResource BoolToVisibility}}" />
+
+                    <Button Style="{StaticResource PrimaryButton}" Content="Close" Margin="8,0,0,0"
+                            IsDefault="True"
+                            Command="{Binding FinishCommand}"
+                            Visibility="{Binding IsDone, Converter={StaticResource BoolToVisibility}}" />
+                </StackPanel>
+            </Grid>
+        </StackPanel>
+    </Grid>
+
+        <!-- Over everything, so nothing behind it can be clicked while work is running. -->
+        <controls:BusyOverlay />
+    </Grid>
+</Window>

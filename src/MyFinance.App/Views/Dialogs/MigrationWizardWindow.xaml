@@ -1,0 +1,226 @@
+<Window x:Class="MyFinance.App.Views.Dialogs.MigrationWizardWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:conv="clr-namespace:MyFinance.App.Converters"
+        xmlns:controls="clr-namespace:MyFinance.App.Views.Controls"
+        Title="{Binding Title}"
+        Width="900" Height="680"
+        ShowInTaskbar="False"
+        Background="{StaticResource SurfaceBrush}"
+        FontFamily="{StaticResource UiFontFamily}"
+        FontSize="{StaticResource FontSizeBody}">
+
+    <Window.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVisibility" />
+        <conv:InverseBooleanToVisibilityConverter x:Key="NotBoolToVisibility" />
+        <conv:MoneySignBrushConverter x:Key="MoneyBrush" />
+        <conv:CountToVisibilityConverter x:Key="CountToVisibility" />
+    </Window.Resources>
+
+    <Window.InputBindings>
+        <KeyBinding Key="F1" Command="{Binding HelpCommand}" />
+    </Window.InputBindings>
+
+    <Grid>
+    <Grid Margin="24">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <TextBlock Grid.Row="0" Style="{StaticResource PageTitleText}"
+                   Text="Bring across a Microsoft Money file" />
+
+        <!-- Step 1: choose a file -->
+        <StackPanel Grid.Row="1" Margin="0,20,0,0" VerticalAlignment="Top"
+                    Visibility="{Binding IsChoosingFile, Converter={StaticResource BoolToVisibility}}">
+            <TextBlock Style="{StaticResource BodyText}" TextWrapping="Wrap"
+                       Text="Choose the .mny file you used with Microsoft Money. Everything in it — accounts, categories, payees and every transaction — is read across into this book." />
+
+            <TextBlock Style="{StaticResource SecondaryText}" TextWrapping="Wrap" Margin="0,12,0,0"
+                       Text="Your Money file is only ever read. It is never written to, moved or changed, so whatever happens here you still have it." />
+
+            <Button Style="{StaticResource PrimaryButton}" Content="Choose a file…"
+                    HorizontalAlignment="Left" Margin="0,20,0,0"
+                    Command="{Binding ChooseFileCommand}" />
+        </StackPanel>
+
+        <!-- Steps 2 and 3 share the account table: the same figures, before and after. -->
+        <Grid Grid.Row="1" Margin="0,20,0,0"
+              Visibility="{Binding IsChoosingFile, Converter={StaticResource NotBoolToVisibility}}">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+
+            <Border Grid.Row="0" Style="{StaticResource CardBorder}" Margin="0,0,0,12">
+                <StackPanel>
+                    <TextBlock Style="{StaticResource SubtitleText}" Text="{Binding FileName}" />
+                    <TextBlock Style="{StaticResource SecondaryText}" Margin="0,4,0,0"
+                               Text="{Binding PeriodText}" />
+
+                    <TextBlock Style="{StaticResource BodyText}" Margin="0,10,0,0" TextWrapping="Wrap">
+                        <Run Text="{Binding TransactionCount, Mode=OneWay, StringFormat=N0}" />
+                        <Run Text="transactions," />
+                        <Run Text="{Binding CategoryCount, Mode=OneWay, StringFormat=N0}" />
+                        <Run Text="categories and" />
+                        <Run Text="{Binding PayeeCount, Mode=OneWay, StringFormat=N0}" />
+                        <Run Text="payees." />
+                    </TextBlock>
+
+                    <TextBlock Style="{StaticResource BodyText}" Margin="0,10,0,0" TextWrapping="Wrap"
+                               Text="{Binding SummaryText}"
+                               Visibility="{Binding IsDone, Converter={StaticResource BoolToVisibility}}" />
+                </StackPanel>
+            </Border>
+
+            <!-- The book has to be empty, and saying why beats a disabled button. -->
+            <Border Grid.Row="1" Margin="0,0,0,12" Padding="14,10" CornerRadius="6"
+                    Background="{StaticResource SurfaceAltBrush}"
+                    BorderBrush="{StaticResource NegativeBrush}" BorderThickness="1"
+                    Visibility="{Binding TargetBookIsEmpty, Converter={StaticResource NotBoolToVisibility}}">
+                <TextBlock Style="{StaticResource BodyText}" TextWrapping="Wrap"
+                           Text="{Binding BlockedExplanation}" />
+            </Border>
+
+            <StackPanel Grid.Row="1" Margin="0,0,0,12"
+                        Visibility="{Binding IsReviewing, Converter={StaticResource BoolToVisibility}}">
+                <CheckBox Content="Bring across accounts Money had closed"
+                          IsChecked="{Binding IncludeClosedAccounts}" />
+                <TextBlock Style="{StaticResource SecondaryText}" Margin="22,2,0,0" TextWrapping="Wrap"
+                           Text="A closed account still holds the history that explains where the money went." />
+
+                <CheckBox Content="Keep the bills Money projected into the register"
+                          Margin="0,10,0,0"
+                          IsChecked="{Binding IncludeScheduledInstances}"
+                          Visibility="{Binding HasScheduled, Converter={StaticResource BoolToVisibility}}" />
+                <TextBlock Style="{StaticResource SecondaryText}" Margin="22,2,0,0" TextWrapping="Wrap"
+                           Text="{Binding ScheduledExplanation}"
+                           Visibility="{Binding HasScheduled, Converter={StaticResource BoolToVisibility}}" />
+            </StackPanel>
+
+            <!--
+                The check that matters. Money is still on the machine and still shows its own
+                account list, so these are laid out to be read straight against it.
+            -->
+            <Border Grid.Row="2" Style="{StaticResource CardBorder}">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+
+                    <StackPanel Grid.Row="0">
+                        <TextBlock Style="{StaticResource SubtitleText}"
+                                   Text="Check these against Money's own account list" />
+                        <TextBlock Style="{StaticResource SecondaryText}"
+                                   Margin="0,4,0,0" TextWrapping="Wrap"
+                                   Text="Every figure here should match what Money shows. If one does not, say so before you rely on this book." />
+                    </StackPanel>
+
+                    <DataGrid Grid.Row="1" Style="{StaticResource DataGridBase}"
+                              ItemsSource="{Binding Accounts}" Margin="0,10,0,0">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="Account" Width="*"
+                                                Binding="{Binding Name}"
+                                                ElementStyle="{StaticResource GridCellText}" />
+                            <DataGridTextColumn Header="Type" Width="150"
+                                                Binding="{Binding TypeText}"
+                                                ElementStyle="{StaticResource GridCellText}" />
+                            <DataGridTextColumn Header="State" Width="90"
+                                                Binding="{Binding StateText}"
+                                                ElementStyle="{StaticResource GridCellText}" />
+                            <DataGridTextColumn Header="Transactions" Width="110"
+                                                Binding="{Binding TransactionCount, StringFormat=N0}"
+                                                ElementStyle="{StaticResource GridAmountText}" />
+                            <DataGridTemplateColumn Header="Balance" Width="150">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Style="{StaticResource GridAmountText}"
+                                                   Text="{Binding BalanceText}"
+                                                   Foreground="{Binding Balance, Converter={StaticResource MoneyBrush}}" />
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+                        </DataGrid.Columns>
+                    </DataGrid>
+
+                    <Border Grid.Row="2" Background="{StaticResource SurfaceSunkenBrush}"
+                            BorderBrush="{StaticResource BorderBrush}" BorderThickness="1"
+                            CornerRadius="6" Padding="14,10" Margin="0,10,0,0">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+
+                            <TextBlock Grid.Column="0" VerticalAlignment="Center"
+                                       Style="{StaticResource BodyText}"
+                                       FontWeight="SemiBold"
+                                       Text="Total account balance" />
+
+                            <TextBlock Grid.Column="1"
+                                       FontFamily="{StaticResource NumericFontFamily}"
+                                       FontSize="{StaticResource FontSizeSubtitle}"
+                                       FontWeight="SemiBold"
+                                       Text="{Binding TotalText}"
+                                       Foreground="{Binding Total, Converter={StaticResource MoneyBrush}}" />
+                        </Grid>
+                    </Border>
+                </Grid>
+            </Border>
+
+            <Expander Grid.Row="3" Margin="0,12,0,0" Header="What was found in the file"
+                      Visibility="{Binding Diagnostics.Count, Converter={StaticResource CountToVisibility}}">
+                <ItemsControl ItemsSource="{Binding Diagnostics}" Margin="0,8,0,0">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <TextBlock Style="{StaticResource SecondaryText}" TextWrapping="Wrap"
+                                       Margin="0,2" Text="{Binding Message}" />
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </Expander>
+        </Grid>
+
+        <TextBlock Grid.Row="2" Style="{StaticResource ErrorText}" Margin="0,14,0,0"
+                   TextWrapping="Wrap"
+                   Text="{Binding ErrorMessage}"
+                   Visibility="{Binding HasError, Converter={StaticResource BoolToVisibility}}" />
+
+        <StackPanel Grid.Row="3" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,18,0,0">
+            <TextBlock VerticalAlignment="Center" Margin="0,0,14,0"
+                       Style="{StaticResource SecondaryText}"
+                       Text="Working…"
+                       Visibility="{Binding IsBusy, Converter={StaticResource BoolToVisibility}}" />
+
+            <Button Style="{StaticResource SecondaryButton}" Content="Choose another file"
+                    Command="{Binding BackCommand}"
+                    Visibility="{Binding IsReviewing, Converter={StaticResource BoolToVisibility}}" />
+
+            <Button Style="{StaticResource SecondaryButton}" Content="Cancel" Margin="8,0,0,0"
+                    IsCancel="True" Command="{Binding CancelCommand}"
+                    Visibility="{Binding IsDone, Converter={StaticResource NotBoolToVisibility}}" />
+
+            <Button Style="{StaticResource PrimaryButton}" Content="Bring it across" Margin="8,0,0,0"
+                    IsDefault="True"
+                    Command="{Binding MigrateCommand}"
+                    Visibility="{Binding IsReviewing, Converter={StaticResource BoolToVisibility}}"
+                    IsEnabled="{Binding TargetBookIsEmpty}" />
+
+            <Button Style="{StaticResource PrimaryButton}" Content="Done" Margin="8,0,0,0"
+                    IsDefault="True"
+                    Command="{Binding FinishCommand}"
+                    Visibility="{Binding IsDone, Converter={StaticResource BoolToVisibility}}" />
+        </StackPanel>
+    </Grid>
+
+        <!-- Over everything, so nothing behind it can be clicked while work is running. -->
+        <controls:BusyOverlay />
+    </Grid>
+</Window>

@@ -1,0 +1,35 @@
+# Normalize text files in the repository, and let git pick the working-tree ending.
+* text=auto
+
+# Scripts are ending-sensitive and this repo is developed across both platforms.
+# cmd.exe mis-parses LF-only batch files; bash chokes on CR in shebang lines.
+*.cmd  text eol=crlf
+*.bat  text eol=crlf
+*.ps1  text eol=crlf
+*.sh   text eol=lf
+
+# Source and project files.
+*.cs      text diff=csharp
+*.csproj  text
+*.props   text
+*.targets text
+*.xaml    text
+*.slnx    text
+*.md      text
+*.json    text
+
+# Binary: never normalize, never diff as text.
+*.png  binary
+*.jpg  binary
+*.ico  binary
+*.mny  binary
+*.mbf  binary
+*.mfdb binary
+*.mfbak binary
+
+# Bank statement fixtures are byte-exact by definition — normalising their line endings
+# would defeat the quirks they exist to reproduce.
+*.ofx -text
+*.qfx -text
+*.qbo -text
+*.qif -text

@@ -1,0 +1,95 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:conv="clr-namespace:MyFinance.App.Converters">
+
+    <!--
+        Chart marks, in one place so every chart in the application obeys the same spec:
+        thin marks with 4px rounded ends, a 2px gap between adjacent fills, recessive
+        gridlines, and axis text in ink rather than in the series colour.
+    -->
+
+    <conv:FractionToWidthConverter x:Key="FractionToWidth" />
+    <conv:FractionToHeightConverter x:Key="FractionToHeight" />
+    <conv:BudgetStatusBrushConverter x:Key="BudgetStatusBrush" />
+
+    <Style x:Key="ChartAxisText" TargetType="TextBlock">
+        <Setter Property="FontFamily" Value="{StaticResource UiFontFamily}" />
+        <Setter Property="FontSize" Value="{StaticResource FontSizeSmall}" />
+        <Setter Property="Foreground" Value="{StaticResource ChartMutedInkBrush}" />
+    </Style>
+
+    <Style x:Key="ChartValueText" TargetType="TextBlock">
+        <Setter Property="FontFamily" Value="{StaticResource NumericFontFamily}" />
+        <Setter Property="FontSize" Value="{StaticResource FontSizeSmall}" />
+        <Setter Property="Foreground" Value="{StaticResource TextSecondaryBrush}" />
+    </Style>
+
+    <Style x:Key="ChartLabelText" TargetType="TextBlock">
+        <Setter Property="FontFamily" Value="{StaticResource UiFontFamily}" />
+        <Setter Property="FontSize" Value="{StaticResource FontSizeBody}" />
+        <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}" />
+        <Setter Property="TextTrimming" Value="CharacterEllipsis" />
+        <Setter Property="VerticalAlignment" Value="Center" />
+    </Style>
+
+    <Style x:Key="ChartGridLine" TargetType="Rectangle">
+        <Setter Property="Height" Value="1" />
+        <Setter Property="Fill" Value="{StaticResource ChartGridBrush}" />
+        <Setter Property="VerticalAlignment" Value="Top" />
+    </Style>
+
+    <!--
+        One horizontal bar. A magnitude chart uses a single hue for every bar: the length
+        already carries the value, so colouring by rank would spend the only free channel
+        saying the same thing twice.
+    -->
+    <DataTemplate x:Key="HorizontalBarTemplate">
+        <Grid Margin="0,3">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="200" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+
+            <TextBlock Grid.Column="0" Style="{StaticResource ChartLabelText}"
+                       Text="{Binding Label}"
+                       ToolTip="{Binding Label}"
+                       Margin="0,0,10,0" />
+
+            <!-- The track makes an empty bar legible as "almost nothing" rather than as a
+                 missing row. -->
+            <Border Grid.Column="1" x:Name="Track"
+                    Background="{StaticResource ChartTrackBrush}"
+                    CornerRadius="4"
+                    Height="14"
+                    HorizontalAlignment="Stretch" />
+
+            <Rectangle Grid.Column="1"
+                       Height="14"
+                       HorizontalAlignment="Left"
+                       RadiusX="4" RadiusY="4"
+                       Fill="{StaticResource ChartSeries1Brush}"
+                       ToolTip="{Binding AmountText}">
+                <Rectangle.Width>
+                    <MultiBinding Converter="{StaticResource FractionToWidth}">
+                        <Binding Path="Fraction" />
+                        <Binding Path="ActualWidth" ElementName="Track" />
+                    </MultiBinding>
+                </Rectangle.Width>
+            </Rectangle>
+
+            <StackPanel Grid.Column="2" Orientation="Horizontal" Margin="12,0,0,0">
+                <TextBlock Style="{StaticResource ChartValueText}"
+                           Text="{Binding AmountText}"
+                           MinWidth="90"
+                           TextAlignment="Right" />
+                <TextBlock Style="{StaticResource ChartAxisText}"
+                           Text="{Binding ShareText}"
+                           MinWidth="56"
+                           TextAlignment="Right"
+                           Margin="8,0,0,0" />
+            </StackPanel>
+        </Grid>
+    </DataTemplate>
+
+</ResourceDictionary>
