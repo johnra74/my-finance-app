@@ -44,6 +44,12 @@ decided, and by whom, is readable afterwards rather than re-derived.
 | 010 | [Backup and restore](010-backup-and-restore/spec.md) | `.mfbak` holding both halves, checkpointed, verified, pruned; restore before opening | `Data/Security/BackupService.cs`, `Data/Services/BookBackupService.cs` |
 | 011 | [Packaging and release](011-packaging-and-release/spec.md) | One self-contained file, native libraries, no trimming, cross-built from Linux | `build.*`, `Directory.Build.props`, `App/app.manifest` |
 
+## Drafted, not yet built
+
+| # | Spec | The feature, in one line |
+|---|---|---|
+| 020 | [Inline transaction entry at the bottom of the register](020-register-entry-panel/spec.md) | Replace the modal transaction entry form with an inline panel docked to the register, toggled on demand, staying open across consecutive entries, switching between payment/deposit/transfer modes. |
+
 ## Gaps — seven built, one part-built
 
 Ranked by what it costs the user not to have it. The **Build order** column is the sequence
