@@ -1,0 +1,141 @@
+<UserControl x:Class="MyFinance.App.Views.Controls.RegisterEntryPanel"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:local="clr-namespace:MyFinance.App.Views.Controls"
+             xmlns:core="clr-namespace:MyFinance.Core.Registers;assembly=MyFinance.Core"
+             Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
+             BorderThickness="0,1,0,0"
+             BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}">
+
+    <UserControl.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVis" />
+    </UserControl.Resources>
+
+    <Grid Margin="12">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <!-- Entry fields and actions -->
+        <StackPanel Grid.Row="0" Orientation="Vertical">
+
+            <!-- Error message -->
+            <TextBlock Text="{Binding ErrorMessage}" Foreground="Red" TextWrapping="Wrap" Margin="0,0,0,8"
+                       Visibility="{Binding ErrorMessage, Converter={StaticResource BoolToVis}}" />
+
+            <!-- Common fields row 1 -->
+            <Grid Margin="0,0,0,8">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+
+                <!-- Date -->
+                <StackPanel Grid.Column="0" Orientation="Vertical">
+                    <TextBlock Text="Date:" FontSize="11" Margin="0,0,0,2" />
+                    <DatePicker SelectedDate="{Binding Date, Mode=TwoWay}" Width="100" />
+                </StackPanel>
+
+                <!-- Number -->
+                <StackPanel Grid.Column="1" Orientation="Vertical" Margin="8,0,0,0">
+                    <TextBlock Text="Number:" FontSize="11" Margin="0,0,0,2" />
+                    <TextBox Text="{Binding Number, Mode=TwoWay}" Width="80" />
+                </StackPanel>
+
+                <!-- Amount -->
+                <StackPanel Grid.Column="2" Orientation="Vertical" Margin="8,0,0,0">
+                    <TextBlock Text="Amount:" FontSize="11" Margin="0,0,0,2" />
+                    <TextBox Text="{Binding AmountText, Mode=TwoWay}" Width="100" />
+                </StackPanel>
+
+                <!-- Actions -->
+                <StackPanel Grid.Column="3" Orientation="Horizontal" Margin="8,16,0,0">
+                    <Button Content="Save" Padding="12,4" Command="{Binding SaveCommand}" Margin="0,0,4,0" />
+                    <Button Content="Cancel" Padding="12,4" Command="{Binding CancelCommand}" />
+                </StackPanel>
+            </Grid>
+
+            <!-- Common fields row 2 -->
+            <Grid Margin="0,0,0,8">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+
+                <!-- Payee -->
+                <StackPanel Grid.Column="0" Orientation="Vertical">
+                    <TextBlock Text="Payee:" FontSize="11" Margin="0,0,0,2" />
+                    <ComboBox ItemsSource="{Binding PayeeNames}" Text="{Binding PayeeName, Mode=TwoWay}" IsEditable="True" />
+                </StackPanel>
+
+                <!-- Memo -->
+                <StackPanel Grid.Column="1" Orientation="Vertical" Margin="8,0,0,0">
+                    <TextBlock Text="Memo:" FontSize="11" Margin="0,0,0,2" />
+                    <TextBox Text="{Binding Memo, Mode=TwoWay}" />
+                </StackPanel>
+            </Grid>
+
+            <!-- Mode-specific fields - Payment/Deposit mode -->
+            <Grid Margin="0,0,0,8" Visibility="{Binding IsTransfer, Converter={StaticResource BoolToVis}, ConverterParameter=Inverse}">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+
+                <!-- Category -->
+                <StackPanel Grid.Column="0" Orientation="Vertical">
+                    <TextBlock Text="Category:" FontSize="11" Margin="0,0,0,2" />
+                    <ComboBox ItemsSource="{Binding Categories}" SelectedItem="{Binding Category, Mode=TwoWay}"
+                              DisplayMemberPath="FullName" SelectedValuePath="Id" />
+                </StackPanel>
+
+                <!-- Split button -->
+                <Button Grid.Column="1" Content="Split..." Padding="12,4" Margin="8,16,0,0"
+                        Command="{Binding EditSplitsCommand}" />
+
+                <!-- Checkboxes -->
+                <StackPanel Grid.Column="2" Orientation="Horizontal" Margin="8,16,0,0">
+                    <CheckBox Content="Cleared" IsChecked="{Binding IsCleared, Mode=TwoWay}" Margin="0,0,12,0" />
+                    <CheckBox Content="Void" IsChecked="{Binding IsVoid, Mode=TwoWay}" />
+                </StackPanel>
+            </Grid>
+
+            <!-- Mode-specific fields - Transfer mode -->
+            <Grid Margin="0,0,0,8" Visibility="{Binding IsTransfer, Converter={StaticResource BoolToVis}}">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+
+                <!-- Transfer target -->
+                <StackPanel Grid.Column="0" Orientation="Vertical">
+                    <TextBlock Text="Transfer to:" FontSize="11" Margin="0,0,0,2" />
+                    <ComboBox ItemsSource="{Binding TransferTargets}" SelectedItem="{Binding TransferAccount, Mode=TwoWay}"
+                              DisplayMemberPath="Name" SelectedValuePath="Id" />
+                </StackPanel>
+
+                <!-- Checkboxes -->
+                <StackPanel Grid.Column="1" Orientation="Horizontal" Margin="8,16,0,0">
+                    <CheckBox Content="Cleared" IsChecked="{Binding IsCleared, Mode=TwoWay}" Margin="0,0,12,0" />
+                    <CheckBox Content="Void" IsChecked="{Binding IsVoid, Mode=TwoWay}" />
+                </StackPanel>
+            </Grid>
+
+            <!-- Reconciled warning -->
+            <TextBlock Text="⚠️ This transaction is reconciled. Editing will unreconcile it."
+                       Foreground="DarkOrange" TextWrapping="Wrap" Margin="0,0,0,8"
+                       Visibility="{Binding IsReconciledWarningVisible, Converter={StaticResource BoolToVis}}" />
+
+            <!-- Suggestion UI -->
+            <StackPanel Orientation="Vertical" Margin="0,0,0,8"
+                        Visibility="{Binding HasSuggestion, Converter={StaticResource BoolToVis}}">
+                <TextBlock Text="{Binding SuggestionText}" Foreground="Blue" TextWrapping="Wrap" Margin="0,0,0,4" />
+                <Button Content="Use this" Padding="12,4" Command="{Binding UseSuggestionCommand}" HorizontalAlignment="Left" />
+            </StackPanel>
+
+        </StackPanel>
+    </Grid>
+</UserControl>

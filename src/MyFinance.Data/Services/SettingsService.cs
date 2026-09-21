@@ -40,6 +40,9 @@ public sealed class SettingsService
     /// <summary>Remembered page setup — currently the orientation.</summary>
     public const string PrintPageSetupKey = "print.pagesetup";
 
+    /// <summary>Whether the inline transaction entry panel is visible at the bottom of the register.</summary>
+    public const string EntryPanelIsOpenKey = "panel.entry.isopen";
+
     private readonly IBookContextFactory _factory;
 
     public SettingsService(IBookContextFactory factory)
@@ -166,5 +169,18 @@ public sealed class SettingsService
 
         await db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         return secret;
+    }
+
+    /// <summary>Gets whether the entry panel should be open, defaulting to false if not set.</summary>
+    public async Task<bool> GetEntryPanelIsOpenAsync(CancellationToken cancellationToken = default)
+    {
+        string? value = await GetAsync(EntryPanelIsOpenKey, cancellationToken).ConfigureAwait(false);
+        return value == "true";
+    }
+
+    /// <summary>Sets whether the entry panel should be open.</summary>
+    public async Task SetEntryPanelIsOpenAsync(bool isOpen, CancellationToken cancellationToken = default)
+    {
+        await SetAsync(EntryPanelIsOpenKey, isOpen ? "true" : "false", cancellationToken).ConfigureAwait(false);
     }
 }
