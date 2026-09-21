@@ -51,8 +51,9 @@ mode switching and navigation stay in reach.
 9. **Given** unsaved changes in the entry panel, **When** the user presses Escape or clicks
    "Cancel", **Then** all unsaved edits are discarded and the panel remains open and ready
    for the next entry.
-10. **Given** the entry panel open, **When** the user selects a different register row, **Then**
-    `[NEEDS CLARIFICATION: are unsaved panel edits committed, prompted for save, or discarded?]`
+10. **Given** the entry panel open with unsaved changes, **When** the user clicks a different
+    register row, **Then** a prompt appears asking to save, discard, or cancel; "cancel" keeps
+    the original row selected and the panel unchanged.
 
 ### Edge cases
 
@@ -77,8 +78,8 @@ mode switching and navigation stay in reach.
   the next entry without requiring a separate "New" action.
 - **FR-003**: The entry panel MUST be dismissible by a "Cancel" button or keyboard (Escape),
   discarding unsaved changes.
-- **FR-004**: `[NEEDS CLARIFICATION: MUST the panel's visibility state be remembered
-  (per account, or app-wide) across sessions?]`
+- **FR-004**: The panel's visibility state MUST be persisted across sessions, app-wide (not
+  per account), via the user's preferences.
 
 **Entry modes**
 
@@ -143,13 +144,14 @@ mode switching and navigation stay in reach.
 
 - **FR-023**: Pressing Escape or clicking "Cancel" MUST discard unsaved changes and leave the
   panel open for a fresh entry.
-- **FR-024**: `[NEEDS CLARIFICATION: when the user selects a different register row with
-  unsaved changes pending, MUST the panel commit, prompt the user, or discard?]`
+- **FR-024**: When the user selects a different register row with unsaved panel changes, the
+  system MUST prompt (save, discard, or cancel); if the user cancels, the original row and
+  panel state remain unchanged (same as Acceptance scenario 10 above).
 
 **Split editor**
 
-- **FR-025**: `[NEEDS CLARIFICATION: MUST the split editor stay a secondary dialog/window, or
-  MUST it be redesigned as a collapsible section or inline detail within the panel itself?]`
+- **FR-025**: The split editor MUST remain a separate modal dialog, opened via the same
+  mechanism as today, unchanged.
 
 **Balance-only and reconciled transactions**
 
@@ -218,3 +220,24 @@ the register. All entity definitions, invariants, and relationships remain uncha
 - Changes to reconciliation workflow or UI (**spec 010**).
 - Investment transactions, loan amortization, or multi-currency arithmetic (those are covered
   by **specs 013, 015** respectively).
+
+## Clarifications
+
+### 2026-09-20
+
+- **Q: MUST the panel's visibility state be remembered (per account, or app-wide)?** (FR-004)
+  → **App-wide, one setting**, persisted in the user's preferences via `SettingsService` (same
+  pattern as `016-printing`'s remembered column selection). Scope is app-wide rather than
+  per-account to match the existing precedent and because a panel is a global UI affordance,
+  not an account-specific editor window.
+  *(Assumed, for consistency with the only existing precedent for a remembered UI preference
+  in this codebase.)*
+- **Q: When the user selects a different register row with unsaved changes pending, what
+  happens?** (Acceptance scenario 10, FR-024) → **Prompt the user: save, discard, or
+  cancel**; if the user cancels, the original row selection and panel state are restored
+  unchanged. *(Assumed, matching the existing confirm-before-destructive-action precedent of
+  `RegisterPageViewModel.DeleteTransactionCommand`.)*
+- **Q: MUST the split editor stay a secondary dialog/window, or be redesigned inline?**
+  (FR-025) → **Stays a separate modal**, opened identically to today via `IModalService` and
+  `SplitEditorViewModel`. No redesign in scope; splitting logic is orthogonal to the
+  panel-vs-modal presentation choice. *(Assumed; confirmed architecturally conflict-free.*)
