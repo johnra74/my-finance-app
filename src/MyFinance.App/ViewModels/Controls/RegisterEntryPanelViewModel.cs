@@ -2,6 +2,7 @@ using System.Globalization;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using MyFinance.App.Services;
+using MyFinance.App.ViewModels.Dialogs;
 using MyFinance.Core.Entities;
 using MyFinance.Core.Enums;
 using MyFinance.Core.Primitives;
@@ -148,25 +149,25 @@ public partial class RegisterEntryPanelViewModel : ObservableObject
         ArgumentNullException.ThrowIfNull(transaction);
 
         _editingId = transaction.Id;
-        _date = transaction.Date.ToDateTime(TimeOnly.MinValue);
-        _number = transaction.Number;
-        _payeeName = transaction.Payee?.Name;
-        _memo = transaction.Memo;
+        Date = transaction.Date.ToDateTime(TimeOnly.MinValue);
+        Number = transaction.Number;
+        PayeeName = transaction.Payee?.Name;
+        Memo = transaction.Memo;
 
         // Infer mode from the transaction type
         if (transaction.TransferPeer is not null)
         {
-            _mode = EntryMode.Transfer;
-            _transferAccount = TransferTargets.FirstOrDefault(a => a.Id == transaction.TransferPeer.AccountId);
+            Mode = EntryMode.Transfer;
+            TransferAccount = TransferTargets.FirstOrDefault(a => a.Id == transaction.TransferPeer.AccountId);
         }
         else
         {
-            _mode = transaction.Amount.IsNegative ? EntryMode.Payment : EntryMode.Deposit;
+            Mode = transaction.Amount.IsNegative ? EntryMode.Payment : EntryMode.Deposit;
         }
 
-        _amountText = transaction.Amount.Abs().ToString("N", CultureInfo.CurrentCulture);
-        _isCleared = transaction.ClearedStatus != ClearedStatus.Uncleared;
-        _isVoid = transaction.IsVoid;
+        AmountText = transaction.Amount.Abs().ToString("N", CultureInfo.CurrentCulture);
+        IsCleared = transaction.ClearedStatus != ClearedStatus.Uncleared;
+        IsVoid = transaction.IsVoid;
         _isReconciled = transaction.ClearedStatus == ClearedStatus.Reconciled;
 
         _splits =
@@ -181,7 +182,7 @@ public partial class RegisterEntryPanelViewModel : ObservableObject
 
         if (_splits.Count == 1)
         {
-            _category = Categories.FirstOrDefault(c => c.Id == _splits[0].CategoryId);
+            Category = Categories.FirstOrDefault(c => c.Id == _splits[0].CategoryId);
         }
 
         OnPropertyChanged(nameof(IsSplit));
@@ -438,16 +439,16 @@ public partial class RegisterEntryPanelViewModel : ObservableObject
     private void ClearAll()
     {
         _editingId = null;
-        _date = DateTime.Today;
-        _number = null;
-        _payeeName = null;
-        _memo = null;
-        _mode = EntryMode.Payment;
-        _amountText = string.Empty;
-        _category = null;
-        _transferAccount = null;
-        _isCleared = false;
-        _isVoid = false;
+        Date = DateTime.Today;
+        Number = null;
+        PayeeName = null;
+        Memo = null;
+        Mode = EntryMode.Payment;
+        AmountText = string.Empty;
+        Category = null;
+        TransferAccount = null;
+        IsCleared = false;
+        IsVoid = false;
         _isReconciled = false;
         _splits = [];
         ClearSuggestion();
@@ -503,16 +504,6 @@ public partial class RegisterEntryPanelViewModel : ObservableObject
         MarkDirty();
     }
 
-    partial void OnAmountTextChanged(string value)
-    {
-        MarkDirty();
-    }
-
-    partial void OnPayeeNameChanged(string? value)
-    {
-        MarkDirty();
-    }
-
     partial void OnDateChanged(DateTime value)
     {
         MarkDirty();
@@ -523,7 +514,17 @@ public partial class RegisterEntryPanelViewModel : ObservableObject
         MarkDirty();
     }
 
+    partial void OnPayeeNameChanged(string? value)
+    {
+        MarkDirty();
+    }
+
     partial void OnMemoChanged(string? value)
+    {
+        MarkDirty();
+    }
+
+    partial void OnAmountTextChanged(string value)
     {
         MarkDirty();
     }
@@ -537,4 +538,5 @@ public partial class RegisterEntryPanelViewModel : ObservableObject
     {
         MarkDirty();
     }
+
 }
