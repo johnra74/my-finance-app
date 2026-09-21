@@ -177,7 +177,6 @@ public partial class App : Application
         var modals = new ModalService();
 
         modals.Register<AccountEditorViewModel>(() => new AccountEditorWindow());
-        modals.Register<TransactionEditorViewModel>(() => new TransactionEditorWindow());
         modals.Register<SplitEditorViewModel>(() => new SplitEditorWindow());
         modals.Register<CategoryEditorViewModel>(() => new CategoryEditorWindow());
         modals.Register<ReconcileViewModel>(() => new ReconcileWindow());
