@@ -6,6 +6,7 @@ using MyFinance.App.Printing;
 using MyFinance.App.Services;
 using MyFinance.Core.Help;
 using MyFinance.App.ViewModels.Dialogs;
+using MyFinance.App.ViewModels.Controls;
 using MyFinance.Core.Entities;
 using MyFinance.Core.Enums;
 using MyFinance.Core.Primitives;
@@ -113,6 +114,7 @@ public sealed partial class RegisterPageViewModel : PageViewModel
     private readonly IModalService _modals;
     private readonly IDialogService _dialogs;
     private readonly IServiceProviderAccessor _services;
+    private readonly SettingsService _settings;
 
     private int _accountId;
     private bool _suspendRefresh;
@@ -130,7 +132,8 @@ public sealed partial class RegisterPageViewModel : PageViewModel
         ReconcileService reconcile,
         IModalService modals,
         IDialogService dialogs,
-        IServiceProviderAccessor services)
+        IServiceProviderAccessor services,
+        SettingsService settings)
     {
         _register = register;
         _accounts = accounts;
@@ -141,6 +144,11 @@ public sealed partial class RegisterPageViewModel : PageViewModel
         _modals = modals;
         _dialogs = dialogs;
         _services = services;
+        _settings = settings;
+
+        EntryPanel = new RegisterEntryPanelViewModel(
+            _register, _payees, _suggestions, _modals,
+            _accountId, _transferTargets, _categoryList, _payeeNames);
     }
 
     public override string Title => AccountName;
@@ -148,6 +156,8 @@ public sealed partial class RegisterPageViewModel : PageViewModel
     public override AppSection Section => AppSection.Banking;
 
     public override HelpTopic HelpTopic => HelpTopic.AccountsAndRegister;
+
+    public RegisterEntryPanelViewModel EntryPanel { get; }
 
     public ObservableCollection<RegisterRowViewModel> Rows { get; } = [];
 
@@ -228,7 +238,12 @@ public sealed partial class RegisterPageViewModel : PageViewModel
         }
     }
 
-    public override Task OnNavigatedToAsync() => RefreshAsync();
+    public override async Task OnNavigatedToAsync()
+    {
+        bool isOpen = await _settings.GetEntryPanelIsOpenAsync().ConfigureAwait(true);
+        EntryPanel.IsOpen = isOpen;
+        await RefreshAsync().ConfigureAwait(true);
+    }
 
     [RelayCommand]
     private async Task RefreshAsync()
@@ -261,6 +276,8 @@ public sealed partial class RegisterPageViewModel : PageViewModel
         _transferTargets = loaded.Targets;
         _categoryList = loaded.Categories;
         _payeeNames = loaded.Payees;
+
+        EntryPanel.UpdateLists(_transferTargets, _categoryList, _payeeNames);
 
         RegisterView view = loaded.View;
 
@@ -297,14 +314,8 @@ public sealed partial class RegisterPageViewModel : PageViewModel
             return;
         }
 
-        TransactionEditorViewModel editor = TransactionEditorViewModel.ForNew(
-            _register, _payees, _suggestions, _modals, _accountId, _transferTargets, _categoryList, _payeeNames);
-
-        if (_modals.Show(editor))
-        {
-            await RefreshAsync().ConfigureAwait(true);
-            SelectedRow = Rows.FirstOrDefault(r => r.Id == editor.SavedId) ?? SelectedRow;
-        }
+        EntryPanel.New();
+        await _settings.SetEntryPanelIsOpenAsync(true).ConfigureAwait(true);
     }
 
     [RelayCommand]
@@ -323,13 +334,8 @@ public sealed partial class RegisterPageViewModel : PageViewModel
             return;
         }
 
-        TransactionEditorViewModel editor = TransactionEditorViewModel.ForExisting(
-            _register, _payees, _suggestions, _modals, _accountId, _transferTargets, _categoryList, _payeeNames, existing);
-
-        if (_modals.Show(editor))
-        {
-            await RefreshAsync().ConfigureAwait(true);
-        }
+        EntryPanel.Edit(existing);
+        await _settings.SetEntryPanelIsOpenAsync(true).ConfigureAwait(true);
     }
 
     /// <summary>
@@ -584,4 +590,17 @@ public sealed partial class RegisterPageViewModel : PageViewModel
     partial void OnCurrentBalanceChanged(Money value) => OnPropertyChanged(nameof(CurrentBalanceText));
 
     partial void OnClearedBalanceChanged(Money value) => OnPropertyChanged(nameof(ClearedBalanceText));
+
+    partial void OnSelectedRowChanged(RegisterRowViewModel? value)
+    {
+        if (EntryPanel.IsDirty)
+        {
+            if (!_dialogs.Confirm(
+                "Unsaved changes",
+                "You have unsaved changes in the entry panel. Discard them?"))
+            {
+                SelectedRow = SelectedRow;
+            }
+        }
+    }
 }

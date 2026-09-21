@@ -2,7 +2,17 @@
   "permissions": {
     "allow": [
       "Bash(python3 -)",
-      "Bash(sed -n '/## Gaps — five built/,/^## Gaps — tabled/p' README.md)"
+      "Bash(sed -n '/## Gaps — five built/,/^## Gaps — tabled/p' README.md)",
+      "Bash(awk '{print $3}')",
+      "Bash(dotnet test *)",
+      "Bash(git add *)",
+      "Bash(git commit -m 'spec\\(020\\): add inline transaction entry at the bottom of the register *)",
+      "Bash(dotnet build *)",
+      "Bash(git commit -m 'spec\\(020\\): implement T001 — entry mode mapper \\(phase 1\\) *)",
+      "Bash(git commit -m 'spec\\(020\\): add implementation guide for phases 2-4 *)",
+      "Bash(git commit -m 'spec\\(020\\): partial phase 2 — panel ViewModel, UserControl, and settings \\(WIP\\) *)",
+      "Bash(git commit -m 'spec\\(020\\): fix phase 2 compilation — use generated properties, not fields *)",
+      "Bash(git commit -m 'spec\\(020\\): implement phase 3 — dock panel to register page *)"
     ]
   }
 }

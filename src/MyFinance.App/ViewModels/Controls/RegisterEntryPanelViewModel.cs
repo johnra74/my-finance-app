@@ -53,11 +53,25 @@ public partial class RegisterEntryPanelViewModel : ObservableObject
         _mode = EntryMode.Payment;
     }
 
-    public IReadOnlyList<Account> TransferTargets { get; }
+    public IReadOnlyList<Account> TransferTargets { get; private set; }
 
-    public IReadOnlyList<CategoryListItem> Categories { get; }
+    public IReadOnlyList<CategoryListItem> Categories { get; private set; }
 
-    public IReadOnlyList<string> PayeeNames { get; }
+    public IReadOnlyList<string> PayeeNames { get; private set; }
+
+    public void UpdateLists(
+        IReadOnlyList<Account> transferTargets,
+        IReadOnlyList<CategoryListItem> categories,
+        IReadOnlyList<string> payeeNames)
+    {
+        TransferTargets = [.. transferTargets.Where(a => _currentAccountId is null || a.Id != _currentAccountId)];
+        Categories = categories;
+        PayeeNames = payeeNames;
+
+        OnPropertyChanged(nameof(TransferTargets));
+        OnPropertyChanged(nameof(Categories));
+        OnPropertyChanged(nameof(PayeeNames));
+    }
 
     [ObservableProperty]
     private bool _isOpen;
