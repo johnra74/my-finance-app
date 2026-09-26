@@ -12,7 +12,19 @@
       "Bash(git commit -m 'spec\\(020\\): add implementation guide for phases 2-4 *)",
       "Bash(git commit -m 'spec\\(020\\): partial phase 2 — panel ViewModel, UserControl, and settings \\(WIP\\) *)",
       "Bash(git commit -m 'spec\\(020\\): fix phase 2 compilation — use generated properties, not fields *)",
-      "Bash(git commit -m 'spec\\(020\\): implement phase 3 — dock panel to register page *)"
+      "Bash(git commit -m 'spec\\(020\\): implement phase 3 — dock panel to register page *)",
+      "Bash(git rm *)",
+      "Bash(git commit -m 'spec\\(020\\): implement phase 4 — retire transaction editor modal *)",
+      "Bash(grep -rhoE '`\\(src/[A-Za-z0-9_./{}\\\\-]+|Data/[A-Za-z0-9_./{}\\\\-]+|Core/[A-Za-z0-9_./{}\\\\-]+\\)`' specs/)",
+      "Bash(sed 's/`//g')",
+      "Read(//c/Users/ra/AppData/Local/Temp/claude/**)",
+      "Bash(Select-String)",
+      "Bash(sed 's/.*specs.//')",
+      "Bash(grep -v -E \"\\\\\\\\\\\\\\\\\\(obj|bin\\)\\\\\\\\\\\\\\\\\")",
+      "Bash(grep -v -E \"[\\\\\\\\\\\\\\\\/]\\(obj|bin\\)[\\\\\\\\\\\\\\\\/]\")",
+      "Bash(grep -rhoE 'src/MyFinance\\\\.[A-Za-z0-9_./\\\\-]+\\\\.\\(cs|xaml|csproj\\)' specs/015-multi-currency specs/013-investment-accounts specs/020-register-entry-panel)",
+      "Bash(xargs cat)",
+      "Bash(git commit -m 'spec\\(020\\): part A — fix bugs and close out spec paperwork *)"
     ]
   }
 }

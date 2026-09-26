@@ -1,6 +1,6 @@
 # Tasks: Inline transaction entry at the bottom of the register
 
-**Spec:** `./spec.md` · **Plan:** `./plan.md` · **Status:** Draft (unbuilt)
+**Spec:** `./spec.md` · **Plan:** `./plan.md` · **Status:** Built
 
 New deliverable: `MyFinance.Core.Tests/Registers/EntryModeMapperTests` — a new test suite for
 the one piece of decidable logic extracted into Core per Principle 4. Everything else reuses
@@ -17,7 +17,7 @@ on Windows; the coverage table below records that honestly rather than claiming 
 
 ## Phase 1 — Decidable logic, in Core
 
-- [ ] **T001** Entry mode mapper: given a payment/deposit/transfer direction, produce a signed
+- [X] **T001** Entry mode mapper: given a payment/deposit/transfer direction, produce a signed
   amount and normalized category/transfer fields
   - Implements: `src/MyFinance.Core/Registers/EntryModeMapper.cs` (new static class or
     methods)
@@ -31,7 +31,7 @@ on Windows; the coverage table below records that honestly rather than claiming 
 
 ## Phase 2 — The panel (needs Windows to verify UI behavior)
 
-- [ ] **T002** Panel state and lifecycle: IsOpen, IsDirty, New/Edit population, focus on open
+- [X] **T002** Panel state and lifecycle: IsOpen, IsDirty, New/Edit population, focus on open
   - Implements: `src/MyFinance.App/ViewModels/Controls/RegisterEntryPanelViewModel.cs` (new
     class, inherits `ObservableObject`)
   - Consumes: `RegisterService.FindAsync`, `SuggestionService`, `IModalService` (all
@@ -42,19 +42,19 @@ on Windows; the coverage table below records that honestly rather than claiming 
     straightforward; the test focuses on state transitions, not rendering.
   - Requirements: FR-001–004 (showing/hiding and persistence), FR-009–010 (New/Edit), spec
     002 FR-034 (refuse balance-only accounts)
-- [ ] **T003** Save flow: clear-on-new-save, update-in-place-on-edit-save, refresh register
+- [X] **T003** Save flow: clear-on-new-save, update-in-place-on-edit-save, refresh register
   - Implements: `RegisterEntryPanelViewModel.SaveAsync`
   - Calls: `RegisterService.SaveAsync` (existing, proven by `RegisterServiceTests`)
   - Proven by: **existing `RegisterServiceTests.SaveAsync_*` coverage**, plus manual
     verification on Windows of the panel clearing / staying open (FR-002).
   - Requirements: FR-011 (update in place), spec 002 FR-021 (replace, don't accumulate)
-- [ ] **T004** Split access from the panel: call `EditSplitsCommand`, display summary
+- [X] **T004** Split access from the panel: call `EditSplitsCommand`, display summary
   - Implements: `RegisterEntryPanelViewModel.EditSplitsAsync`
   - Calls: `IModalService.Show(SplitEditorViewModel)` (unchanged from modal editor)
   - Proven by: **existing `SplitEditorViewModelTests`** (the split editor itself is unchanged).
     **Needs Windows** for the flow (panel → split modal → panel again).
   - Requirements: FR-012–014 (split editing, FR-013 "split across N categories" summary)
-- [ ] **T005** Payee memory and suggestion: pre-fill amount/category, offer classifier
+- [X] **T005** Payee memory and suggestion: pre-fill amount/category, offer classifier
   suggestions
   - Implements: `RegisterEntryPanelViewModel.SuggestCategoryAsync`, `UseSuggestion`
   - Calls: `PayeeService.FindByNameAsync`, `SuggestionService.SuggestAsync` (existing, proven
@@ -62,26 +62,26 @@ on Windows; the coverage table below records that honestly rather than claiming 
   - Proven by: **existing test coverage** (nothing new in Core/Data logic).
     **Needs Windows** for the textbox focus / suggestion UI.
   - Requirements: FR-015–016 (spec 002 FR-022–023), Acceptance scenario 8
-- [ ] **T006** Validation surfacing: collect `TransactionValidator` errors, display together
+- [X] **T006** Validation surfacing: collect `TransactionValidator` errors, display together
   - Implements: `RegisterEntryPanelViewModel.SaveAsync` error handling
   - Calls: `TransactionValidator.Validate` (existing, proven by `TransactionValidatorTests`)
   - Proven by: **existing validator coverage**. Panel's own error → UI binding is **needs
     Windows**.
   - Requirements: FR-017 (spec 002 FR-024–025, report all errors together)
-- [ ] **T007** Dirty-state prompt on row selection: detect changes, offer save/discard/cancel
+- [X] **T007** Dirty-state prompt on row selection: detect changes, offer save/discard/cancel
   - Implements: `RegisterPageViewModel.OnEntryPanelDirtyChanged`, prompt logic
   - Proven by: **needs a person on Windows**. Logic is straightforward (if IsDirty, show
     dialog; if cancel, revert selection); the test is that it actually prompts at the right
     time and the user can choose correctly. No automated test framework can assert dialog-box
     user interaction.
   - Requirements: FR-024 (clarification 2 above), Acceptance scenario 10
-- [ ] **T008** Visibility toggle and persistence: IsOpen binding, SettingsService key
+- [X] **T008** Visibility toggle and persistence: IsOpen binding, SettingsService key
   - Implements: `SettingsService` new key `"panel.entry.isopen"`, `RegisterEntryPanel.xaml`
     `Visibility` binding, `RegisterPageViewModel.LoadSettingsAsync` call
   - Proven by: **existing `SettingsServiceTests`** (round-trip storage). UI binding is **needs
     Windows**.
   - Requirements: FR-001–003 (show/hide), FR-004 (clarification 1, app-wide persistence)
-- [ ] **T009** Balance-only and reconciled transaction guards: refuse writes, show warnings
+- [X] **T009** Balance-only and reconciled transaction guards: refuse writes, show warnings
   - Implements: `RegisterEntryPanelViewModel` validation (check
     `Account.Type == Unsupported` before save, check `Transaction.IsReconciled` before edit)
   - Proven by: **existing `RegisterServiceTests`** (the service already refuses these). Panel
@@ -90,14 +90,14 @@ on Windows; the coverage table below records that honestly rather than claiming 
 
 ## Phase 3 — Docking and keyboard accessibility
 
-- [ ] **T010** Dock the panel into RegisterPage.xaml: add 4th grid row, host UserControl
+- [X] **T010** Dock the panel into RegisterPage.xaml: add 4th grid row, host UserControl
   - Implements: `src/MyFinance.App/Views/Controls/RegisterEntryPanel.xaml` (UserControl,
     three mode-specific grids), `RegisterPage.xaml` (add row, place panel)
   - Proven by: **needs Windows** for layout and alignment. The binding structure (DataContext,
     Visibility on IsOpen, field bindings to ViewModel properties) follows existing patterns
     (`BusyOverlay.xaml`, `RegisterPage.xaml`'s own filter toggle).
   - Requirements: FR-001–003 (showing/hiding)
-- [ ] **T011** Keyboard operability: tab order, Enter saves, Escape cancels, Ctrl+N from
+- [X] **T011** Keyboard operability: tab order, Enter saves, Escape cancels, Ctrl+N from
   register
   - Implements: `RegisterEntryPanel.xaml.cs` code-behind (focus management on IsOpen change),
     `RegisterPage.xaml` `InputBindings` for Ctrl+N (call
@@ -110,7 +110,7 @@ on Windows; the coverage table below records that honestly rather than claiming 
 
 ## Phase 4 — Retiring the modal (last, gated by parity)
 
-- [ ] **T012** Remove TransactionEditorWindow/ViewModel, drop modal registration
+- [X] **T012** Remove TransactionEditorWindow/ViewModel, drop modal registration
   - Deletes: `src/MyFinance.App/ViewModels/Dialogs/TransactionEditorViewModel.cs`,
     `src/MyFinance.App/Views/Dialogs/TransactionEditorWindow.xaml(.cs)`
   - Modifies: `src/MyFinance.App/App.xaml.cs` (remove `modals.Register<TransactionEditorViewModel>`)

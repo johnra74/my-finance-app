@@ -214,6 +214,14 @@ public sealed class DialogService : IDialogService
         MessageBox.Show(message, title, MessageBoxButton.YesNo, MessageBoxImage.Question)
             == MessageBoxResult.Yes;
 
+    public SaveDiscardCancel ConfirmSaveDiscardCancel(string title, string message) =>
+        MessageBox.Show(message, title, MessageBoxButton.YesNoCancel, MessageBoxImage.Question) switch
+        {
+            MessageBoxResult.Yes => SaveDiscardCancel.Save,
+            MessageBoxResult.No => SaveDiscardCancel.Discard,
+            _ => SaveDiscardCancel.Cancel,
+        };
+
     /// <summary>Books default to Documents\MyFinance, created on first use.</summary>
     internal static string DefaultBookDirectory()
     {

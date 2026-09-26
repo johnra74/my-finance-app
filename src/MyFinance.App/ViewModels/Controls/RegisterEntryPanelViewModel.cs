@@ -22,6 +22,7 @@ public partial class RegisterEntryPanelViewModel : ObservableObject
     private readonly PayeeService _payees;
     private readonly SuggestionService _suggestions;
     private readonly IModalService _modals;
+    private readonly IDialogService _dialogs;
     private readonly int? _currentAccountId;
 
     private int? _editingId;
@@ -34,6 +35,7 @@ public partial class RegisterEntryPanelViewModel : ObservableObject
         PayeeService payees,
         SuggestionService suggestions,
         IModalService modals,
+        IDialogService dialogs,
         int? currentAccountId,
         IReadOnlyList<Account> transferTargets,
         IReadOnlyList<CategoryListItem> categories,
@@ -43,6 +45,7 @@ public partial class RegisterEntryPanelViewModel : ObservableObject
         _payees = payees;
         _suggestions = suggestions;
         _modals = modals;
+        _dialogs = dialogs;
         _currentAccountId = currentAccountId;
 
         TransferTargets = [.. transferTargets.Where(a => _currentAccountId is null || a.Id != _currentAccountId)];
@@ -344,6 +347,16 @@ public partial class RegisterEntryPanelViewModel : ObservableObject
     private async Task SaveAsync()
     {
         ErrorMessage = null;
+
+        if (_isReconciled)
+        {
+            if (!_dialogs.Confirm(
+                "Unreconcile transaction",
+                "This transaction is reconciled. Edit it?"))
+            {
+                return;
+            }
+        }
 
         if (_currentAccountId is null)
         {

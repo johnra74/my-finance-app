@@ -1,6 +1,6 @@
 # Implementation Plan: Inline transaction entry at the bottom of the register
 
-**Spec:** `./spec.md` · **Status:** Draft (unbuilt)
+**Spec:** `./spec.md` · **Status:** Built
 
 ## Summary
 

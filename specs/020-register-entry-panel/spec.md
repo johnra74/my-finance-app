@@ -2,7 +2,7 @@
 
 **Folder:** `020-register-entry-panel`
 **Created:** 2026-09-20 (written before implementation)
-**Status:** Draft
+**Status:** Built
 **Input:** "Replace the modal transaction entry form with an inline panel at the bottom of
 the register, docked below the grid, toggled on demand, staying open across consecutive
 entries, switching between payment, deposit and transfer modes."

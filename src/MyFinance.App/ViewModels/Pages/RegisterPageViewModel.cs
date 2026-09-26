@@ -121,6 +121,7 @@ public sealed partial class RegisterPageViewModel : PageViewModel
     private IReadOnlyList<Account> _transferTargets = [];
     private IReadOnlyList<CategoryListItem> _categoryList = [];
     private IReadOnlyList<string> _payeeNames = [];
+    private RegisterRowViewModel? _previousRow;
 
 
     public RegisterPageViewModel(
@@ -147,7 +148,7 @@ public sealed partial class RegisterPageViewModel : PageViewModel
         _settings = settings;
 
         EntryPanel = new RegisterEntryPanelViewModel(
-            _register, _payees, _suggestions, _modals,
+            _register, _payees, _suggestions, _modals, _dialogs,
             _accountId, _transferTargets, _categoryList, _payeeNames);
     }
 
@@ -591,15 +592,35 @@ public sealed partial class RegisterPageViewModel : PageViewModel
 
     partial void OnClearedBalanceChanged(Money value) => OnPropertyChanged(nameof(ClearedBalanceText));
 
+    partial void OnSelectedRowChanging(RegisterRowViewModel? oldValue, RegisterRowViewModel? newValue)
+    {
+        _previousRow = oldValue;
+    }
+
     partial void OnSelectedRowChanged(RegisterRowViewModel? value)
     {
-        if (EntryPanel.IsDirty)
+        if (EntryPanel.IsDirty && _previousRow != value)
         {
-            if (!_dialogs.Confirm(
+            SaveDiscardCancel result = _dialogs.ConfirmSaveDiscardCancel(
                 "Unsaved changes",
-                "You have unsaved changes in the entry panel. Discard them?"))
+                "You have unsaved changes in the entry panel. Save, discard, or cancel?");
+
+            switch (result)
             {
-                SelectedRow = SelectedRow;
+                case SaveDiscardCancel.Save:
+                    // Save the pending transaction before switching rows
+                    _ = EntryPanel.SaveCommand.ExecuteAsync(null);
+                    break;
+
+                case SaveDiscardCancel.Cancel:
+                    // Revert to the previous row
+                    SelectedRow = _previousRow;
+                    return;
+
+                case SaveDiscardCancel.Discard:
+                    // Clear dirty state and allow the switch
+                    EntryPanel.IsDirty = false;
+                    break;
             }
         }
     }

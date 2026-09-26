@@ -1,5 +1,13 @@
 namespace MyFinance.App.Services;
 
+/// <summary>Result of a three-way save/discard/cancel prompt.</summary>
+public enum SaveDiscardCancel
+{
+    Save,
+    Discard,
+    Cancel,
+}
+
 /// <summary>
 /// File pickers and message boxes, behind an interface so view models stay testable and
 /// free of direct WPF dependencies.
@@ -38,4 +46,6 @@ public interface IDialogService
     void ShowInformation(string title, string message);
 
     bool Confirm(string title, string message);
+
+    SaveDiscardCancel ConfirmSaveDiscardCancel(string title, string message);
 }
