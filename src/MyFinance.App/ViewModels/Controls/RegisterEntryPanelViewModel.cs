@@ -418,6 +418,10 @@ public partial class RegisterEntryPanelViewModel : ObservableObject
         {
             ErrorMessage = ex.Message;
         }
+        catch (Exception ex)
+        {
+            ErrorMessage = $"Save failed: {ex.Message}";
+        }
     }
 
     /// <summary>Discard unsaved changes. Panel stays open.</summary>
