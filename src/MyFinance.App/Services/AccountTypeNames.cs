@@ -22,6 +22,7 @@ public static class AccountTypeNames
         AccountType.Cash,
         AccountType.CreditCard,
         AccountType.LineOfCredit,
+        AccountType.Brokerage,
     ];
 
     public static string Describe(AccountType type) => type switch
@@ -33,6 +34,7 @@ public static class AccountTypeNames
         AccountType.Cash => "Cash",
         AccountType.CreditCard => "Credit card",
         AccountType.LineOfCredit => "Line of credit",
+        AccountType.Brokerage => "Brokerage",
 
         // Loan and mortgage accounts arrive from an import but cannot be edited here.
         AccountType.UnsupportedImported => "Investment or loan",

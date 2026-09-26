@@ -160,6 +160,7 @@ public partial class App : Application
         // The register is transient: it is opened against a particular account, and a
         // singleton would carry the previous account's rows into the next one.
         services.AddTransient<RegisterPageViewModel>();
+        services.AddTransient<HoldingsPageViewModel>();
 
         // The wizard holds the state of one file, so a fresh one is needed per import.
         services.AddTransient<ImportWizardViewModel>();

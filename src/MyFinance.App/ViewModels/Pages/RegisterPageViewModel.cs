@@ -174,6 +174,9 @@ public sealed partial class RegisterPageViewModel : PageViewModel
     private string _accountName = "Register";
 
     [ObservableProperty]
+    private AccountType _accountType;
+
+    [ObservableProperty]
     private RegisterRowViewModel? _selectedRow;
 
     [ObservableProperty]
@@ -283,6 +286,7 @@ public sealed partial class RegisterPageViewModel : PageViewModel
         RegisterView view = loaded.View;
 
         AccountName = view.Account.Name;
+        AccountType = view.Account.Type;
 
         int? previous = SelectedRow?.Id;
 
@@ -388,6 +392,19 @@ public sealed partial class RegisterPageViewModel : PageViewModel
         {
             _dialogs.ShowError("Duplicate transaction", ex.Message);
         }
+    }
+
+    [RelayCommand]
+    private void OpenHoldings()
+    {
+        if (AccountType != AccountType.Brokerage)
+        {
+            return;
+        }
+
+        HoldingsPageViewModel page = _services.GetRequired<HoldingsPageViewModel>();
+        page.SetAccount(_accountId);
+        _services.GetRequired<INavigationService>().GoTo(page);
     }
 
     [RelayCommand]

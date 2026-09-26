@@ -7,6 +7,7 @@ using MyFinance.Core.Help;
 using MyFinance.App.ViewModels.Dialogs;
 using MyFinance.Core.Accounts;
 using MyFinance.Core.Entities;
+using MyFinance.Core.Enums;
 using MyFinance.Core.Primitives;
 using MyFinance.Data.Services;
 
@@ -32,6 +33,8 @@ public sealed class AccountRowViewModel
     public bool IsClosed => Summary.IsClosed;
 
     public bool IsReadOnly => Summary.Account.IsReadOnly;
+
+    public AccountType Type => Summary.Account.Type;
 
     public int UncategorizedCount => Summary.UncategorizedCount;
 
@@ -269,6 +272,21 @@ public sealed partial class AccountListPageViewModel : PageViewModel
         }
 
         RegisterPageViewModel page = _services.GetRequired<RegisterPageViewModel>();
+        page.SetAccount(row.Id);
+        _navigation.GoTo(page);
+    }
+
+    /// <summary>Opens holdings for a brokerage account.</summary>
+    [RelayCommand]
+    private void OpenHoldings(AccountRowViewModel? row)
+    {
+        row ??= SelectedAccount;
+        if (row is null || row.Type != AccountType.Brokerage)
+        {
+            return;
+        }
+
+        HoldingsPageViewModel page = _services.GetRequired<HoldingsPageViewModel>();
         page.SetAccount(row.Id);
         _navigation.GoTo(page);
     }
