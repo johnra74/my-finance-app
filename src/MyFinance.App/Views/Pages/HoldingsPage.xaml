@@ -29,7 +29,8 @@
 
             <Button Grid.Column="1" Style="{StaticResource PrimaryButton}"
                     Content="Set price"
-                    Command="{Binding SetPriceCommand}" />
+                    Command="{Binding SetPriceCommand}"
+                    CommandParameter="{Binding SelectedRow}" />
 
             <TextBlock Grid.Column="3" VerticalAlignment="Center" Margin="12,0,0,0">
                 <Run Text="as of " FontSize="11" />
@@ -40,6 +41,7 @@
         <!-- Holdings DataGrid -->
         <DataGrid Grid.Row="1"
                   ItemsSource="{Binding Holdings}"
+                  SelectedItem="{Binding SelectedRow}"
                   AutoGenerateColumns="False"
                   CanUserAddRows="False"
                   CanUserDeleteRows="False"
