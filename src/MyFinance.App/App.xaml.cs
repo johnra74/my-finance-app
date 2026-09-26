@@ -186,6 +186,8 @@ public partial class App : Application
         modals.Register<RuleEditorViewModel>(() => new RuleEditorWindow());
         modals.Register<ScheduleEditorViewModel>(() => new ScheduleEditorWindow());
         modals.Register<BudgetEditorViewModel>(() => new BudgetEditorWindow());
+        modals.Register<InvestmentEditorViewModel>(() => new InvestmentEditorWindow());
+        modals.Register<PriceEditorViewModel>(() => new PriceEditorWindow());
         modals.Register<MigrationWizardViewModel>(() => new MigrationWizardWindow());
         modals.Register<BackupsViewModel>(() => new BackupsWindow());
         modals.Register<AboutViewModel>(() => new AboutWindow());

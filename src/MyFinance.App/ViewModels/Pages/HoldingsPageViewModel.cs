@@ -3,6 +3,7 @@ using System.Globalization;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using MyFinance.App.Services;
+using MyFinance.App.ViewModels.Dialogs;
 using MyFinance.Core.Help;
 using MyFinance.Core.Enums;
 using MyFinance.Core.Investments;
@@ -41,11 +42,15 @@ public sealed partial class HoldingRowViewModel : ObservableObject
 public sealed partial class HoldingsPageViewModel : PageViewModel
 {
     private readonly InvestmentService _investments;
+    private readonly IModalService _modals;
     private int _accountId;
 
-    public HoldingsPageViewModel(InvestmentService investments)
+    public HoldingsPageViewModel(
+        InvestmentService investments,
+        IModalService modals)
     {
         _investments = investments;
+        _modals = modals;
         _asOfDate = DateTime.Today;
     }
 
@@ -56,6 +61,9 @@ public sealed partial class HoldingsPageViewModel : PageViewModel
     public override HelpTopic HelpTopic => HelpTopic.Investments;
 
     public ObservableCollection<HoldingRowViewModel> Holdings { get; } = [];
+
+    [ObservableProperty]
+    private HoldingRowViewModel? _selectedRow;
 
     [ObservableProperty]
     private DateTime _asOfDate;
@@ -106,13 +114,32 @@ public sealed partial class HoldingsPageViewModel : PageViewModel
     [RelayCommand]
     private void RecordActivity()
     {
-        // TODO: B4 — Open InvestmentEditorViewModel modal
+        // For now, start with an empty security list; user can type to find/create
+        InvestmentEditorViewModel editor = InvestmentEditorViewModel.For(
+            _investments,
+            _accountId,
+            []);
+
+        if (_modals.Show(editor))
+        {
+            _ = RefreshAsync();
+        }
     }
 
     [RelayCommand]
-    private void SetPrice()
+    private void SetPrice(HoldingRowViewModel? row)
     {
-        // TODO: B4 — Open PriceEditorViewModel modal
+        if (row is null)
+        {
+            return;
+        }
+
+        PriceEditorViewModel editor = PriceEditorViewModel.For(_investments, row.Holding.SecurityId);
+
+        if (_modals.Show(editor))
+        {
+            _ = RefreshAsync();
+        }
     }
 
     partial void OnAsOfDateChanged(DateTime value)
