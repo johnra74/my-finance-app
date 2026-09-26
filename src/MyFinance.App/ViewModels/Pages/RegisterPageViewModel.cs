@@ -232,6 +232,7 @@ public sealed partial class RegisterPageViewModel : PageViewModel
         try
         {
             _accountId = accountId;
+            EntryPanel.SetAccount(accountId);
             SelectedRange = Ranges[0];
             SearchText = null;
             UncategorizedOnly = false;

@@ -23,7 +23,7 @@ public partial class RegisterEntryPanelViewModel : ObservableObject
     private readonly SuggestionService _suggestions;
     private readonly IModalService _modals;
     private readonly IDialogService _dialogs;
-    private readonly int? _currentAccountId;
+    private int? _currentAccountId;
 
     private int? _editingId;
     private IReadOnlyList<SplitDraft> _splits = [];
@@ -61,6 +61,11 @@ public partial class RegisterEntryPanelViewModel : ObservableObject
     public IReadOnlyList<CategoryListItem> Categories { get; private set; }
 
     public IReadOnlyList<string> PayeeNames { get; private set; }
+
+    public void SetAccount(int? accountId)
+    {
+        _currentAccountId = accountId;
+    }
 
     public void UpdateLists(
         IReadOnlyList<Account> transferTargets,
