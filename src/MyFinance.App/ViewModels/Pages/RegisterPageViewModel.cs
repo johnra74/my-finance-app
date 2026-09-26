@@ -150,6 +150,8 @@ public sealed partial class RegisterPageViewModel : PageViewModel
         EntryPanel = new RegisterEntryPanelViewModel(
             _register, _payees, _suggestions, _modals, _dialogs,
             _accountId, _transferTargets, _categoryList, _payeeNames);
+
+        EntryPanel.OnSaveSucceeded(RefreshAsync);
     }
 
     public override string Title => AccountName;

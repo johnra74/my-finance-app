@@ -24,6 +24,7 @@ public partial class RegisterEntryPanelViewModel : ObservableObject
     private readonly IModalService _modals;
     private readonly IDialogService _dialogs;
     private int? _currentAccountId;
+    private Func<Task>? _onSaveSucceeded;
 
     private int? _editingId;
     private IReadOnlyList<SplitDraft> _splits = [];
@@ -65,6 +66,11 @@ public partial class RegisterEntryPanelViewModel : ObservableObject
     public void SetAccount(int? accountId)
     {
         _currentAccountId = accountId;
+    }
+
+    public void OnSaveSucceeded(Func<Task> callback)
+    {
+        _onSaveSucceeded = callback;
     }
 
     public void UpdateLists(
@@ -418,6 +424,11 @@ public partial class RegisterEntryPanelViewModel : ObservableObject
             await _register.SaveAsync(draft).ConfigureAwait(true);
             ClearAll();
             IsDirty = false;
+
+            if (_onSaveSucceeded is not null)
+            {
+                await _onSaveSucceeded().ConfigureAwait(true);
+            }
         }
         catch (BookValidationException ex)
         {
