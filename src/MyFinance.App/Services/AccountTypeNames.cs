@@ -34,7 +34,7 @@ public static class AccountTypeNames
         AccountType.CreditCard => "Credit card",
         AccountType.LineOfCredit => "Line of credit",
 
-        // Investment and loan accounts arrive from an import but cannot be edited here.
+        // Loan and mortgage accounts arrive from an import but cannot be edited here.
         AccountType.UnsupportedImported => "Investment or loan",
         _ => type.ToString(),
     };

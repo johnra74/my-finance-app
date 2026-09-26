@@ -126,7 +126,7 @@ src/MyFinance.Semantics/OnnxTextEmbedder.cs                 the model; never thr
 src/MyFinance.Data/Services/SuggestionService.cs            context, cache, fingerprint
 src/MyFinance.Data/Services/PayeeEmbeddingService.cs        the vector cache
 src/MyFinance.Data/Services/CategorizationRuleService.cs    rules, order, try-before-save
-src/MyFinance.App/ViewModels/Dialogs/TransactionEditorViewModel.cs
+src/MyFinance.App/ViewModels/Controls/RegisterEntryPanelViewModel.cs
 src/MyFinance.App/ViewModels/Pages/RulesPageViewModel.cs
 ```
 

@@ -116,7 +116,7 @@
     `Clearing_a_transaction_moves_the_bank_balance_only`
   - Requirements: FR-013, FR-004
 - [X] **T019** Amount as magnitude plus direction in the editor
-  - Implements: `src/MyFinance.App/ViewModels/Dialogs/TransactionEditorViewModel.cs`
+  - Implements: `src/MyFinance.App/ViewModels/Controls/RegisterEntryPanelViewModel.cs`, `src/MyFinance.App/Views/Controls/RegisterEntryPanel.xaml(.cs)`
   - Proven by: **needs Windows** — the arithmetic is covered by T001/T014; what cannot be
     tested here is the control layout
   - Requirement: FR-018

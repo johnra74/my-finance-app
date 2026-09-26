@@ -89,7 +89,7 @@ src/MyFinance.Data/Services/AccountService.cs
 src/MyFinance.Data/Services/RegisterService.cs       entry, edit, delete, transfer legs
 src/MyFinance.Data/Services/ReconcileService.cs
 src/MyFinance.App/ViewModels/Pages/{AccountList,Register}PageViewModel.cs
-src/MyFinance.App/ViewModels/Dialogs/TransactionEditorViewModel.cs
+src/MyFinance.App/ViewModels/Controls/RegisterEntryPanelViewModel.cs
 ```
 
 ## Risks

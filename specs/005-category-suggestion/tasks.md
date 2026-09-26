@@ -156,7 +156,7 @@
   - Requirement: FR-006
 - [X] **T018** The transaction editor as the first caller: the full chain, off the interface
   thread, only when the category is blank
-  - Implements: `src/MyFinance.App/ViewModels/Dialogs/TransactionEditorViewModel.cs`
+  - Implements: `src/MyFinance.App/ViewModels/Controls/RegisterEntryPanelViewModel.cs`
     (`SuggestCategoryAsync`, `UseSuggestionCommand`, `ClearSuggestion`)
   - Proven by: `SuggestionServiceTests.A_payee_filed_before_is_recommended_the_same_way_again`,
     `An_unknown_payee_with_familiar_words_is_a_guess_not_a_certainty`,
