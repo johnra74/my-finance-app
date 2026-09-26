@@ -6,6 +6,7 @@
 
     <UserControl.Resources>
         <BooleanToVisibilityConverter x:Key="BoolToVisibility" />
+        <conv:EnumToVisibilityConverter x:Key="EnumToVisibility" />
         <conv:MoneyConverter x:Key="Money" />
         <conv:MoneySignBrushConverter x:Key="MoneyBrush" />
         <conv:InverseBooleanToVisibilityConverter x:Key="NotBoolToVisibility" />
@@ -39,6 +40,7 @@
                 <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="*" />
                 <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="Auto" />
@@ -67,16 +69,22 @@
                     ToolTip="Print this register as it currently reads, filter and all"
                     Command="{Binding PrintRegisterCommand}" />
 
-            <CheckBox Grid.Column="5" VerticalAlignment="Center" Margin="0,0,12,0"
+            <Button Grid.Column="5" Margin="8,0,0,0" Style="{StaticResource SecondaryButton}"
+                    Content="Holdings"
+                    Visibility="{Binding AccountType, Converter={StaticResource EnumToVisibility}, ConverterParameter=Brokerage}"
+                    ToolTip="View holdings in this brokerage account"
+                    Command="{Binding OpenHoldingsCommand}" />
+
+            <CheckBox Grid.Column="6" VerticalAlignment="Center" Margin="0,0,12,0"
                       Content="Needs a category"
                       IsChecked="{Binding UncategorizedOnly}" />
 
-            <ComboBox Grid.Column="6" Width="150" Margin="0,0,8,0"
+            <ComboBox Grid.Column="7" Width="150" Margin="0,0,8,0"
                       ItemsSource="{Binding Ranges}"
                       DisplayMemberPath="Text"
                       SelectedItem="{Binding SelectedRange}" />
 
-            <TextBox Grid.Column="7" Width="200"
+            <TextBox Grid.Column="8" Width="200"
                      Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged, Delay=300}"
                      ToolTip="Search payee, memo, number or amount" />
         </Grid>
